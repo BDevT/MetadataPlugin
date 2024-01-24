@@ -53,7 +53,7 @@ while running:
     ns = range(1,10)
     for n in ns:
 
-        time.sleep( 10.0 )
+        time.sleep( 1.0 )
 
         path = bag_root / 'bag{0}'.format( n )
 
