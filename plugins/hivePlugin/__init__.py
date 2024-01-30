@@ -338,6 +338,11 @@ class HivePlugin( ingestorservices.plugin.PluginBase ):
                     #field2 = j_d['field2']
                     #field3 = j_d['field3']
                     #field4 = j_d['field4']
+                    #Ajay Rawat
+                    owner = j_d['HIVE testing log'][0]['Operators']
+                    print('*** OWNER')
+                    print(owner[0])
+                    ##
                     print(f"The Extracted JSON from Markdown is = {json_filename}")
             except Exception as e:
                 print(e)
@@ -399,9 +404,11 @@ class HivePlugin( ingestorservices.plugin.PluginBase ):
             ownable = metadata.Ownable(ownerGroup="magrathea", createdBy=None, updatedBy=None, updatedAt=None, createdAt=None, instrumentGroup=None)
 
             name = 'bob' #HIVE testing log + date in the log line 4 change it format
-
+            
             dataset = metadata.Dataset(
                     
+                    #Ajay Rawat
+                    #owner = ['HIVE testing log'][0]['Operators'][0],
                     owner="slartibartfast", #json
                     contactEmail="slartibartfast@magrathea.org", #dummy
                     creationLocation= 'magrathea',
@@ -422,6 +429,9 @@ class HivePlugin( ingestorservices.plugin.PluginBase ):
             #     except:
             #         pass
             
+            # Ajay Rawat
+            # added to extract value from Json based on the key passed
+    
 
 class Factory:
 
