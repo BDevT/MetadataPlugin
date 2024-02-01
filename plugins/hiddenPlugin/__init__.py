@@ -87,4 +87,4 @@ def register_plugin_factory( host_svcs ):
 
     factory = HiddenFactory()
 
-    host_svcs.register_plugin_factory( 'metadata_plugin', 'HiddenPlugin',  factory )
+    # host_svcs.register_plugin_factory( 'metadata_plugin', 'HiddenPlugin',  factory )

@@ -16,7 +16,7 @@ from . import core
 from . import plugin
 from . import properties
 
-from . _dialogs import _property_2_layout, _property_group_2_layout
+from . _dialogs import _property_2_layout, _property_group_2_layout, _property_group_3_layout, _property_3_layout
 
 log_decorator = core.create_logger_decorator( logger )
 

@@ -62,4 +62,4 @@ def register_plugin_factory( host_svcs ):
 
     factory = PluginFactory()
 
-    host_svcs.register_plugin_factory( 'metadata_plugin', 'PropertyPlugin',  factory )
+    # host_svcs.register_plugin_factory( 'metadata_plugin', 'PropertyPlugin',  factory )

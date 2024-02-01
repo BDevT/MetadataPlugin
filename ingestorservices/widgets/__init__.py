@@ -257,6 +257,38 @@ class LineEdit(Widget):
     def getText( self):
         return self._w.text()
 
+class BoxEdit(Widget):
+
+    class Bridge( QtCore.QObject ):
+        signalSetText = QtCore.Signal(str)
+
+    @staticmethod
+    def create():
+        w = BoxEdit()
+        w.initialise()
+        return w
+
+    def __init__(self):
+        super().__init__()
+
+        self.textChanged = self.register_signal()
+        self.returnPressed = self.register_signal()
+
+        self.ei = EventInspector()
+        self._bridge = BoxEdit.Bridge()
+
+    def initialise(self):
+        self._w = QTextEdit()
+        #self._w.textChanged.connect( self.textChanged.emit )
+        self._bridge.signalSetText.connect( self._w.setText )
+        return self
+
+    def setText(self, s):
+        self._bridge.signalSetText.emit( s )
+
+    def getText( self):
+        return self._w.text()
+
 class ComboBox(Widget):
     @staticmethod
     def create( label ):

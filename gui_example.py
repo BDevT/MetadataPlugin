@@ -207,7 +207,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._fSignalLog = lambda s : self.qtbridge.signalLog.emit(s)
         bridge.signalLog.connect( self._fSignalLog )
 
-        self.setWindowTitle("Example Ingestor App")
+        self.setWindowTitle("PEGASUS Ingestor")
 
         login_widget = LoginWidget( self.loginSciCat, self.logoutSciCat)
         
@@ -248,14 +248,14 @@ class MainWindow(QtWidgets.QMainWindow):
                     except:
                         pass
                     
-                if plugin:
-                    self.host_services.log( 'Started %s' % plugin )
+                # if plugin:
+                #     self.host_services.log( 'Started Plugin')
 
         except Exception as e:
             print(e)
             PrintException()
 
-        layout.addWidget( self.te )
+        # layout.addWidget( self.te )
 
         container = QtWidgets.QWidget()
         container.setLayout(layout)
