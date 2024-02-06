@@ -161,4 +161,3 @@ cython_debug/
 venv
 pluginvenv
 metadata.md
-output.json
