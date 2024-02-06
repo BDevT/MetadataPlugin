@@ -1,10 +1,8 @@
 import PySide6.QtCore as QtCore
-#import PySide6.QtGui as QtGui
 import PySide6.QtWidgets as QtWidgets
 
 import os
 import sys
-#import json
 import logging
 import traceback
 import collections
@@ -207,12 +205,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self._fSignalLog = lambda s : self.qtbridge.signalLog.emit(s)
         bridge.signalLog.connect( self._fSignalLog )
 
-        self.setWindowTitle("Example Ingestor App")
+        self.setWindowTitle("Ingestor")
 
-        login_widget = LoginWidget( self.loginSciCat, self.logoutSciCat)
+        # login_widget = LoginWidget( self.loginSciCat, self.logoutSciCat)
         
         layout = QtWidgets.QVBoxLayout()
-        layout.addWidget( login_widget )
+        # layout.addWidget( login_widget )
 
         host_services = self.host_services
 
@@ -248,18 +246,18 @@ class MainWindow(QtWidgets.QMainWindow):
                     except:
                         pass
                     
-                if plugin:
-                    self.host_services.log( 'Started %s' % plugin )
+                # if plugin:
+                #     self.host_services.log( 'Started Plugin')
 
         except Exception as e:
             print(e)
             PrintException()
 
-        layout.addWidget( self.te )
+        # layout.addWidget( self.te )
 
         container = QtWidgets.QWidget()
         container.setLayout(layout)
-
+        self.resize(400, 300)
         self.setCentralWidget(container)
 
 

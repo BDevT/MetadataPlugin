@@ -16,7 +16,7 @@ from . import core
 from . import plugin
 from . import properties
 
-from . _dialogs import _property_2_layout, _property_group_2_layout
+from . _dialogs import _property_2_layout, _property_group_2_layout, _property_group_3_layout, _property_3_layout, _property_group_4_layout, _property_4_layout
 
 log_decorator = core.create_logger_decorator( logger )
 
@@ -46,7 +46,7 @@ class HostServices:
             self._pluginRegistry.plugins[ label ] = plugin_instance
 
         except Exception as e:
-            print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAA', e)
+            print('register_plugin_factory : EXCEPTION : ', e)
 
     @log_decorator
     def unregister_plugin( self, identifier ):

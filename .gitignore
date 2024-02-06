@@ -160,3 +160,4 @@ cython_debug/
 
 venv
 pluginvenv
+metadata.md

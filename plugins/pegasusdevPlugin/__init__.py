@@ -4,6 +4,8 @@ import random
 import time
 import json
 import logging
+import shutil
+import PySide6.QtWidgets as QtWidgets
 
 logger = logging.getLogger( __name__ )
 
@@ -148,70 +150,61 @@ class Consumer( WorkerBase ):
                 except queue.Empty:
                     pass
 
-
-class ExamplePlugin( ingestorservices.plugin.PluginBase ):
+class PegasusPlugin( ingestorservices.plugin.PluginBase ):
     '''Wait for bagit events. Extract metadata from placeholder and bagit file before writing to backend '''
 
     def __init__(self, host_services):
         super().__init__(host_services)
 
-        self.path_spool  = pathlib.Path('/tmp/spool')
-
+        self.path_spool = pathlib.Path('/tmp/spool')
         self.q = queue.Queue()
-        
         self.producer = Producer(self.q)
-
-        self.consumer = Consumer( self.q )
-        self.consumer.sigDataAvailable.connect( self.onDataAvailable )
+        self.consumer = Consumer(self.q)
+        self.consumer.sigDataAvailable.connect(self.onDataAvailable)
 
         for t in [self.consumer, self.producer]:
             t.daemon = True
             t.start()
 
-        def requireProperty( name, value ):
-
+        def requireProperty(name, value):
             try:
-                prop = self.properties( name )
+                prop = self.properties(name)
             except Exception as e:
-
-                prop = services.properties.Property( name, value )
-
-                self.properties[ prop.name ] = prop
-
+                prop = services.properties.Property(name, value)
+                self.properties[prop.name] = prop
             return prop
 
 
-        prop_name = requireProperty( 'name', '' )
-        prop_mandatory = requireProperty( 'mandatory1', '' )
-        prop_user1 = requireProperty( 'user1', '' )
-        prop_user2 = requireProperty( 'user2', '' )
-
         w = widgets.Widget.create()
         self.w = w
-
         vbox = widgets.VBoxLayout()
 
-        label = widgets.Label.create('Example plugin widget')
-        vbox.addWidget( label )
+        label = widgets.Label.create('PEGASUS SciCat Metadata Plugin')
+        vbox.addWidget(label)
 
-        w.setLayout( vbox )
-
-        self.btn = widgets.PushButton.create( 'Save Placeholder' )
-        self.btn.clicked.connect( self.onRequestSavePlaceHolder )
-
-        vbox.addWidget( self.btn )
+        prop_name = requireProperty('Owner', '')
+        prop_software = requireProperty('Software', '')
+        prop_comments = requireProperty('Comments', '')
 
         pg = services.properties.PropertyGroup( layout=services.properties.PropertyGroup.VERTICAL )
         pg.add( prop_name )
-        pg.add( prop_mandatory )
-        pg.add( prop_user1 )
-        pg.add( prop_user2 )
+        pg.add( prop_software )
+        layoutShort =  services._property_group_2_layout( pg )
+        vbox.addLayout( layoutShort )
 
-        l =  services._property_group_2_layout( pg )
+        pgComments = services.properties.PropertyGroup( layout=services.properties.PropertyGroup.VERTICAL )
+        pgComments.add( prop_comments )
+        layoutComments =  services._property_group_3_layout( pgComments )
+        vbox.addLayout( layoutComments )
 
-        vbox.addLayout( l )
 
-        w.setLayout( vbox )
+        # Add submit button
+        self.btn = widgets.PushButton.create('Submit')
+        self.btn.clicked.connect(self.onRequestSavePlaceHolder)
+        vbox.addWidget(self.btn)
+
+        w.setLayout(vbox)
+
 
 
     def finish(self):
@@ -317,48 +310,54 @@ class ExamplePlugin( ingestorservices.plugin.PluginBase ):
                     self.log(' %s' % str(e))
 
             self.log( j_sm )
+            
+            shutil.rmtree( bagit_path.parent )
+            try:
+                placeholder_path.unlink()
+            except:
+                pass
 
-            # Create an Ownable that will get reused for several other Model objects
-            ownable = metadata.Ownable(ownerGroup="magrathea", accessGroups=["deep_though"], createdBy=None, updatedBy=None, updatedAt=None, createdAt=None, instrumentGroup=None)
+            # # Create an Ownable that will get reused for several other Model objects
+            # ownable = metadata.Ownable(ownerGroup="magrathea", accessGroups=["deep_though"], createdBy=None, updatedBy=None, updatedAt=None, createdAt=None, instrumentGroup=None)
 
-            name = 'bob'
+            # name = 'bob'
 
-            dataset = metadata.Dataset(
-                    path='/foo/bar',
-                    datasetName=str(name),
-                    size=42,
-                    owner="slartibartfast",
-                    contactEmail="slartibartfast@magrathea.org",
-                    creationLocation= 'magrathea',
-                    creationTime=str(datetime.datetime.now()),
-                    type="raw",
-                    instrumentId="earth",
-                    proposalId="deepthought",
-                    dataFormat="planet",
-                    principalInvestigator="A. Mouse",
-                    sourceFolder='/foo/bar',
-                    scientificMetadata= j_sm,
-                    sampleId="gargleblaster",
-                    version='1'
-                    ,validatationStatus=1
-                    ,**ownable.dict())
+            # dataset = metadata.Dataset(
+            #         path='/foo/bar',
+            #         datasetName=str(name),
+            #         size=42,
+            #         owner="slartibartfast",
+            #         contactEmail="slartibartfast@magrathea.org",
+            #         creationLocation= 'magrathea',
+            #         creationTime=str(datetime.datetime.now()),
+            #         type="raw",
+            #         instrumentId="earth",
+            #         proposalId="deepthought",
+            #         dataFormat="planet",
+            #         principalInvestigator="A. Mouse",
+            #         sourceFolder='/foo/bar',
+            #         scientificMetadata= j_sm,
+            #         sampleId="gargleblaster",
+            #         version='1'
+            #         ,validatationStatus=1
+            #         ,**ownable.dict())
 
-            dataset_id = host_services.requestDatasetSave( str(name), dataset )
+            # dataset_id = host_services.requestDatasetSave( str(name), dataset )
 
-            if dataset_id:
-                shutil.rmtree( bagit_path.parent )
+            # if dataset_id:
+            #     shutil.rmtree( bagit_path.parent )
 
-                try:
-                    placeholder_path.unlink()
-                except:
-                    pass
+            #     try:
+            #         placeholder_path.unlink()
+            #     except:
+            #         pass
 
 
 class Factory:
 
     def __call__(self, host_services):
 
-        plugin = ExamplePlugin(host_services)
+        plugin = PegasusPlugin(host_services)
 
         return plugin
 
@@ -368,4 +367,4 @@ def register_plugin_factory( host_services ):
 
     factory = Factory()
 
-    host_services.register_plugin_factory( 'metadata_plugin', 'ExamplePlugin',  factory )
+    # host_services.register_plugin_factory( 'metadata_plugin', 'PegasusPlugin',  factory )
