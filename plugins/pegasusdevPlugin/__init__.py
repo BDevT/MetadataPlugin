@@ -2,7 +2,9 @@ import datetime
 import fnmatch
 import json
 import logging
-
+from pyscicat.client import encode_thumbnail, ScicatClient
+from scitacean.testing.docs import setup_fake_client
+from scitacean import Dataset
 from plugins.pegasusdevPlugin.extract import extractPegasus
 logger = logging.getLogger( __name__ )
 
@@ -249,7 +251,7 @@ class PegasusPlugin( ingestorservices.plugin.PluginBase ):
         if filePath.exists():
             jsonFileRaw = extractPegasus(filePath.absolute())
             jsonFileDict = json.loads(jsonFileRaw)
-
+   
             propOwner = self.properties[ 'Owner' ]
             propOwner.value = 'PEGASUS'
 
@@ -279,19 +281,38 @@ class PegasusPlugin( ingestorservices.plugin.PluginBase ):
             propExperimentData.value = jsonFileRaw
 
     def onSubmitRequest(self):
-        dataset = metadata.Dataset(
+        # dataset = metadata.Dataset(
+        #     owner=self.properties['Owner'].value,
+        #     ownerGroup=self.properties['Owner group'].value,
+        #     investigator=self.properties['Investigator'].value,
+        #     contactEmail=self.properties['Contact email'].value,
+        #     sourceFolder=self.properties['Data source'].value,
+        #     inputDataset=[self.properties['Experimental source'].value],
+        #     usedSoftware=[self.properties['Software'].value],
+        #     creationTime=self.properties['Date'].value,
+        #     type="derived")
+        
+        # print('Submitting dataset:', dataset.__dict__)
+        # scicat = ScicatClient(base_url="http://localhost/api/v3",
+        #                 username="admin",
+        #                 password="2jf70TPNZsS")
+        # dataset_id = scicat.upload_new_dataset(dataset)
+        # print('Dataset submitted:', dataset_id)
+        client = setup_fake_client()
+        dset = Dataset(
             owner=self.properties['Owner'].value,
-            ownerGroup=self.properties['Owner group'].value,
+            owner_group=self.properties['Owner group'].value,
             investigator=self.properties['Investigator'].value,
-            contactEmail=self.properties['Contact email'].value,
-            sourceFolder=self.properties['Data source'].value,
-            inputDataset=[self.properties['Experimental source'].value],
-            usedSoftware=[self.properties['Software'].value],
-            creationTime=self.properties['Date'].value,
-            scientificMetadata=json.loads(self.properties['Simulation data'].value),
+            contact_email=self.properties['Contact email'].value,
+            source_folder=self.properties['Data source'].value,
+            input_datasets=[self.properties['Experimental source'].value],
+            used_software=[self.properties['Software'].value],
+            creation_time=self.properties['Date'].value,
+            meta=json.loads(self.properties['Simulation data'].value),
             type="derived")
         
-        print('Submitting dataset:', dataset.__dict__)
+        dataset_id = client.upload_new_dataset_now(dset)
+        print('Dataset submitted:', dataset_id)
 
 class Factory:
 
