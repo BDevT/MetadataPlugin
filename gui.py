@@ -257,7 +257,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         container = QtWidgets.QWidget()
         container.setLayout(layout)
-        self.resize(400, 300)
+        self.resize(600, 400)
         self.setCentralWidget(container)
 
 

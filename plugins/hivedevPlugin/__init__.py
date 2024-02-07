@@ -310,4 +310,4 @@ def register_plugin_factory( host_services ):
 
     factory = Factory()
 
-    host_services.register_plugin_factory( 'metadata_plugin', 'HivePlugin',  factory )
+    #host_services.register_plugin_factory( 'metadata_plugin', 'HivePlugin',  factory )

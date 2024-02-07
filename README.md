@@ -1,6 +1,6 @@
 ## Metadata HIVE Example
 
-This repository contains the Metadata HIVE Example
+This repository contains the Metadata PEGASUS Example
 
 ## Installation
 
@@ -18,5 +18,5 @@ This repository contains the Metadata HIVE Example
     ```
     python gui.py
     ```
-2. Copy a metadata file to the `data/hive` folder.
+2. Copy a metadata file to the `data/pegasus` folder.
 3. Observe the UI update with the new metadata file.
