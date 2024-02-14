@@ -44,6 +44,9 @@ class PropertyPlugin( ingestorservices.plugin.PluginBase ):
 
             self.properties[ p.name ] = p
 
+    def run(self):
+        pass
+
     def finish(self):
         pass
 

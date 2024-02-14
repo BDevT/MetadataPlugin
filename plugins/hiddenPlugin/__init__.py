@@ -68,6 +68,14 @@ class HiddenPlugin( ingestorservices.plugin.PluginBase ):
         self.worker.daemon = True
         self.worker.start()
 
+    def join(self):
+        print('hiddenPlugin join' )
+
+        self.worker.join()
+
+    def run(self):
+        pass
+
     def finish(self):
         self.worker.stop()
         self.worker.join()

@@ -23,6 +23,9 @@ class EmptyPlugin( ingestorservices.plugin.PluginBase ):
     def __init__(self, host_svcs):
         super().__init__(host_svcs)
 
+    def run(self):
+        pass
+
     def finish(self):
         pass
 

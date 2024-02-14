@@ -4,6 +4,7 @@ import random
 import time
 import json
 import logging
+import shutil
 
 logger = logging.getLogger( __name__ )
 
@@ -213,6 +214,9 @@ class ExamplePlugin( ingestorservices.plugin.PluginBase ):
 
         w.setLayout( vbox )
 
+    def run(self):
+        pass
+
 
     def finish(self):
         self.producer.stop()
@@ -227,11 +231,15 @@ class ExamplePlugin( ingestorservices.plugin.PluginBase ):
 
     def onRequestSavePlaceHolder(self):
 
+        print('SAVEXXXXXXXXX')
+
         prop = self.properties[  'mandatory1' ]
         prop.value = str(datetime.datetime.now() )
 
         try:
             name = self.properties[ 'name'].value
+
+            print('NAME:%s:'%name )
 
             self.log('onRequestSavePlaceHolder %s' % name )
 
@@ -252,6 +260,7 @@ class ExamplePlugin( ingestorservices.plugin.PluginBase ):
             pass
 
     def onDataAvailable( self, *args ):
+        print('DATAXXXXXXX')
         host_services = self.host_services
 
         prop = self.properties[ 'mandatory1' ]
@@ -286,6 +295,8 @@ class ExamplePlugin( ingestorservices.plugin.PluginBase ):
 
             #is there a placeholder?
             placeholder_id = name[3:]
+
+            print('NAMEXXXXXXXX', placeholder_id )
 
             try:
                 placeholder_path = self.path_spool / 'placeholder' / ('%s.json' %placeholder_id )
@@ -323,6 +334,10 @@ class ExamplePlugin( ingestorservices.plugin.PluginBase ):
 
             name = 'bob'
 
+            print('SSSSSS')
+            ownable_dict = ownable.dict()
+            print('FFFFFFf')
+
             dataset = metadata.Dataset(
                     path='/foo/bar',
                     datasetName=str(name),
@@ -343,7 +358,10 @@ class ExamplePlugin( ingestorservices.plugin.PluginBase ):
                     ,validatationStatus=1
                     ,**ownable.dict())
 
-            dataset_id = host_services.requestDatasetSave( str(name), dataset )
+            print('TRY1', name, dataset, host_services)
+            dataset_id = host_services.requestDatasetSave( dataset )
+
+            print('TRY2', dataset_id)
 
             if dataset_id:
                 shutil.rmtree( bagit_path.parent )
