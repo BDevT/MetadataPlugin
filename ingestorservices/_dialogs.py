@@ -4,7 +4,7 @@ from functools import partial
 
 from . import properties
 
-from . widgets import Widget, Label, LineEdit, ComboBox, PushButton, HBoxLayout, VBoxLayout
+from . widgets import Widget, Label, LineEdit, PushButton, HBoxLayout, VBoxLayout
 
 
 def _on_widget_change( e, p, *args, **kwargs ):

@@ -2,6 +2,7 @@ import collections
 import importlib
 import pkgutil
 import datetime
+import json
 
 from collections import namedtuple
 
@@ -21,6 +22,9 @@ from . _dialogs import _property_2_layout, _property_group_2_layout
 log_decorator = core.create_logger_decorator( logger )
 
 PluginDict = core.TypeDict( str, plugin.PluginBase )
+
+import threading
+
 
 class PluginRegistry:
 
@@ -46,7 +50,7 @@ class HostServices:
             self._pluginRegistry.plugins[ label ] = plugin_instance
 
         except Exception as e:
-            print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAA', e)
+            self.log( '%s : %s' % (self, e) )
 
     @log_decorator
     def unregister_plugin( self, identifier ):
@@ -59,12 +63,11 @@ class HostServices:
             del plugins[ identifier ] 
 
 
-    def __init__( self, host ):
+    def __init__( self ):
         super().__init__()
 
         self.bridge = HostServices.Bridge()
 
-        self._host = host
         self._scicat = None
 
         self._pluginRegistry = PluginRegistry(self)
@@ -72,47 +75,62 @@ class HostServices:
     def login( self, base_url, username, password):
 
         # Create a client object. The account used should have the ingestor role in SciCat
+        self.log( 'LOGIN %s %s' %( base_url, username) )
+
         self._scicat = MyMetadataClient(base_url=base_url,
                 username=username,
                 password=password)
 
-        return 1 if self._sciact == None else 0
+        return 1 if self._scicat == None else 0
 
     def logout(self):
-        self._sciact = None
-
-
+        self._scicat = None
 
     @log_decorator
-    def start(self):
+    def load_plugins(self, paths=None):
 
             #discover the plugins
             try:
-                _path=['plugins']
+                _paths = paths if paths else [ 'plugins']
 
-                for finder, name, ispkg in pkgutil.iter_modules(path=_path, prefix='plugins.'):
-                    try:
-                        _ = importlib.import_module( name, 'plugins.' )
+                for x in _paths:
+                    _path=[x]
 
-                        _.register_plugin_factory(self)
-                    except Exception as e:
-                        print('XXXXXXXXXXXXXXXXX',e)
+                    for finder, name, ispkg in pkgutil.iter_modules(path=_path, prefix=x+'.'):
+
+                        try:
+                            _ = importlib.import_module( name,x+'.' )
+
+                            _.register_plugin_factory(self)
+                        except Exception as e:
+                            self.log( self, '%s load_plugins %e',( self, e) )
 
             except Exception as e:
                 print(e)
 
     @log_decorator
-    def requestDatasetSave(self, name, ds):
+    def requestDatasetFind( self, filter_fields ):
+        scicat = self._scicat
+
+        try:
+            results = scicat.datasets_get_many( filter_fields=filter_fields )
+            return results
+        except Exception as e:
+            print(e)
+
+
+    @log_decorator
+    def requestDatasetSave(self, ds):
         scicat = self._scicat
         dataset_id = None
-    
+
         try:
             dataset_id = scicat.upload_new_dataset( ds )
 
             self.log( 'Ingested : %s' % dataset_id )
 
         except Exception as e:
-            self.log('Failed to ingest : EXCEPTION %s' % str(e))
+            self.log( '%s : Failed to ingest : EXCEPTION %s' % (self, str(e)) )
 
 
         return dataset_id
@@ -128,12 +146,14 @@ class HostServices:
         return self._pluginRegistry.plugins
 
     @log_decorator
-    def finish(self):
+    def join_plugins( self ):
         for name, plugin in self.plugins.items():
-            plugin.finish()
+            plugin.join()
 
-            self.log( 'Finished %s' % plugin.__class__.__name__ )
-        self.plugins.clear()
+    @log_decorator
+    def stop_plugins(self):
+        for name, plugin in self.plugins.items():
+            plugin.stop()
 
 
 

@@ -58,5 +58,14 @@ class MyMetadataClient( ScicatClient ):
 
         return res
 
+    def upload_new_dataset( self, *args ):
+
+        #for i, arg in enumerate(args):
+        #    print( i, type(arg) )
+
+        res = super().upload_new_dataset( *args )
+
+        return res
+
 
 

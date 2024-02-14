@@ -9,8 +9,8 @@ class Base:
 
         return getattr( self._scicat_model, name )
 
-    def dict(self):
-        return self._scicat_model.dict()
+    def dict(self,exclude_none=True):
+        return self._scicat_model.dict(exclude_none=exclude_none)
 
 
 class Ownable(Base):
@@ -22,4 +22,4 @@ class Ownable(Base):
 class Dataset(Base):
 
     def __init__(self, *args, **kwargs):
-        super().__init__(pyscicat.model.Dataset( **kwargs ))
+        super().__init__(pyscicat.model.RawDataset( **kwargs ))

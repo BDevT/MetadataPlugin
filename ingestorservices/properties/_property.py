@@ -1,4 +1,5 @@
 from enum import Enum
+import threading
 
 import json
 
@@ -79,6 +80,8 @@ class Property(PropertyBase):
 
         self._direction = direction
 
+        self._lock = threading.Lock()
+
     @property
     def direction(self) -> Direction :
         return self._direction
@@ -94,20 +97,23 @@ class Property(PropertyBase):
 
     @property
     def value(self):
-        return self._value
+        with self._lock:
+         return self._value
     
     @value.setter
     def value( self, value ):
 
-        #if isinstance( value, self._type ):
-        if isinstance( value, type(self._value) ):
-            if value != self._value:
-                self._value = value
+        with self._lock:
 
-                self.sig_changed.emit( self )
-        #else:
-        #    #print(type(value), type(self.value))
-        #    raise PropertyTypeException()
+            #if isinstance( value, self._type ):
+            if isinstance( value, type(self._value) ):
+                if value != self._value:
+                    self._value = value
+
+                    self.sig_changed.emit( self )
+            #else:
+            #    #print(type(value), type(self.value))
+            #    raise PropertyTypeException()
 
 
 
