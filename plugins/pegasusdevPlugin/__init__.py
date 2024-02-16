@@ -1,12 +1,11 @@
-import errno
 import datetime
-import random
-import time
+import fnmatch
 import json
 import logging
-import shutil
-import PySide6.QtWidgets as QtWidgets
-
+from pyscicat.client import encode_thumbnail, ScicatClient
+from scitacean.testing.docs import setup_fake_client
+from scitacean import Dataset
+from plugins.pegasusdevPlugin.extract import extractPegasus
 logger = logging.getLogger( __name__ )
 
 import ingestorservices as services
@@ -14,7 +13,6 @@ import ingestorservices.widgets as widgets
 import ingestorservices.core as core
 import ingestorservices.metadata as metadata
 import ingestorservices.plugin
-
 
 log_decorator = core.create_logger_decorator( logger )
 
@@ -26,6 +24,8 @@ import watchdog.observers
 import watchdog.events
 
 class WorkerBase( threading.Thread):
+    '''WorkerBase class serves as a base for other classes and provides a method stop() that notifies any threads waiting on a condition (cond_stop)'''
+    '''that a change has occurred, potentially used to indicate that the thread should stop its execution.'''
     def __init__(self):
         super().__init__()
         self.cond_stop = threading.Condition()
@@ -37,6 +37,8 @@ class WorkerBase( threading.Thread):
 
 
 class RetryWorker( WorkerBase ):
+    '''RetryWorker class periodically checks for bagit files in a specified directory (root) and puts their paths into a queue (q_out)'''
+    '''for further processing, all while waiting for a signal to stop its execution.'''
     '''Periodically check for bagit files in spool path'''
 
     def __init__(self, path, q_out):
@@ -52,8 +54,8 @@ class RetryWorker( WorkerBase ):
             while not self.cond_stop.wait(timeout=1):
 
                 try:
-                   paths = self.root.glob( './*/bagit.txt') 
-
+                   # get the path of the markdown file here - Ajay
+                   paths = self.root.glob( './*/*.out')
                    for path in sorted(paths):
                        self.q_out.put( path )
 
@@ -62,6 +64,8 @@ class RetryWorker( WorkerBase ):
 
 
 class MyHandler( watchdog.events.FileSystemEventHandler ):
+    '''MyHandler class is designed to handle file system events and specifically watches for the creation of files.'''
+    '''When a new bagit.txt file is created and the specified conditions are met, it emits a signal with the file's path.'''
     '''Watch for creation of bagit files using FileSystemEvents'''
 
     signal = core.Signal()
@@ -75,8 +79,7 @@ class MyHandler( watchdog.events.FileSystemEventHandler ):
         dt = datetime.timedelta(milliseconds=500)
 
         if evt.event_type == 'created':
-
-                if path.name == 'bagit.txt':
+                if fnmatch.fnmatch(path.name, '*.out'):
                     if path != self.last_created and datetime.datetime.now() - self.last_time > dt:
                         self.last_created = path
                         self.last_time = datetime.datetime.now()
@@ -85,9 +88,11 @@ class MyHandler( watchdog.events.FileSystemEventHandler ):
 
 
 class Producer( WorkerBase ):
+    '''Producer class sets up file system monitoring using RetryWorker and MyHandler, creating workers, observing file system events,'''
+    '''and managing threads to generate trigger events based on detected changes.'''
     ''' Generate trigger events using the RetryWorker and the MyHandler '''
 
-    def __init__(self, q, path_spool = '/tmp/spool'):
+    def __init__(self, q, path_spool = './data'):
         super().__init__()
 
         self.signal = core.Signal()
@@ -97,7 +102,7 @@ class Producer( WorkerBase ):
 
     def run(self):
 
-        path =  self.path_spool / 'bags' 
+        path =  self.path_spool / 'pegasus' 
         path.mkdir( parents=True, exist_ok=True)
 
         retry_worker = RetryWorker( path, self.q )
@@ -105,10 +110,13 @@ class Producer( WorkerBase ):
         retry_worker.start()
 
         evt_handler = MyHandler()
-
+        
+        #when evt_handler emits a signal, onNewBagit method will be called.
         evt_handler.signal.connect( self.onNewBagit )
 
         observer = watchdog.observers.Observer()
+
+        #Configures the observer to watch the path directory recursively for events and associates it with evt_handler.
         observer.schedule( evt_handler, path, recursive=True )
 
         observer.start()
@@ -125,6 +133,9 @@ class Producer( WorkerBase ):
         self.q.put( path )
 
 class Consumer( WorkerBase ):
+    '''Consumer class is designed to continuously run in a thread, checking the input queue for data. When data is available in the queue, it emits a signal'''
+    '''(sigDataAvailable) with the retrieved data and proceeds with further tasks if any, continually checking the queue for more data to process.'''
+    
     '''Recieve event paths '''
 
     def __init__(self, q_in ):
@@ -150,61 +161,77 @@ class Consumer( WorkerBase ):
                 except queue.Empty:
                     pass
 
+
 class PegasusPlugin( ingestorservices.plugin.PluginBase ):
-    '''Wait for bagit events. Extract metadata from placeholder and bagit file before writing to backend '''
+    '''Wait for events. Extract metadata from placeholder and file before writing to backend '''
 
     def __init__(self, host_services):
         super().__init__(host_services)
-
-        self.path_spool = pathlib.Path('/tmp/spool')
+        self.path_spool  = pathlib.Path('./data/pegasus')
         self.q = queue.Queue()
         self.producer = Producer(self.q)
-        self.consumer = Consumer(self.q)
-        self.consumer.sigDataAvailable.connect(self.onDataAvailable)
+        self.consumer = Consumer( self.q )
+        self.consumer.sigDataAvailable.connect( self.onDataAvailable )
 
         for t in [self.consumer, self.producer]:
             t.daemon = True
             t.start()
 
-        def requireProperty(name, value):
+        def requireProperty( name, value ):
+
             try:
-                prop = self.properties(name)
+                prop = self.properties( name )
             except Exception as e:
-                prop = services.properties.Property(name, value)
-                self.properties[prop.name] = prop
+
+                prop = services.properties.Property( name, value )
+
+                self.properties[ prop.name ] = prop
+
             return prop
 
+        def boxProperty( name, value ):
+            try:
+                prop = self.properties( name )
+            except Exception as e:
+                prop = services.properties.BoxProperty( name, value )
+                self.properties[ prop.name ] = prop
+
+            return prop
+
+        prop_owner = requireProperty( 'Owner', '' )
+        prop_ownerGroup = requireProperty( 'Owner group', '' )
+        prop_investigator = requireProperty( 'Investigator', '' )
+        prop_email = requireProperty( 'Contact email', '' )
+        prop_creationDate = requireProperty( 'Date', '' )        
+        prop_sourceFolder = requireProperty( 'Data source', '' )
+        prop_inputDataset = requireProperty( 'Experimental source', '' )
+        prop_software = requireProperty( 'Software', '' )
+        prop_experimentData = boxProperty( 'Simulation data', '' )
 
         w = widgets.Widget.create()
         self.w = w
+
         vbox = widgets.VBoxLayout()
 
-        label = widgets.Label.create('PEGASUS SciCat Metadata Plugin')
-        vbox.addWidget(label)
-
-        prop_name = requireProperty('Owner', '')
-        prop_software = requireProperty('Software', '')
-        prop_comments = requireProperty('Comments', '')
-
         pg = services.properties.PropertyGroup( layout=services.properties.PropertyGroup.VERTICAL )
-        pg.add( prop_name )
+        pg.add( prop_owner )
+        pg.add( prop_ownerGroup )
+        pg.add( prop_investigator )
+        pg.add( prop_email )
+        pg.add( prop_creationDate)
+        pg.add( prop_sourceFolder )
+        pg.add( prop_inputDataset )
         pg.add( prop_software )
-        layoutShort =  services._property_group_2_layout( pg )
-        vbox.addLayout( layoutShort )
-
-        pgComments = services.properties.PropertyGroup( layout=services.properties.PropertyGroup.VERTICAL )
-        pgComments.add( prop_comments )
-        layoutComments =  services._property_group_3_layout( pgComments )
-        vbox.addLayout( layoutComments )
-
+        pg.add( prop_experimentData )
+        mainMetadataLayout =  services._property_group_4_layout( pg )
+        vbox.addLayout(mainMetadataLayout)
 
         # Add submit button
         self.btn = widgets.PushButton.create('Submit')
-        self.btn.clicked.connect(self.onRequestSavePlaceHolder)
+        self.btn.clicked.connect(self.onSubmitRequest)
         vbox.addWidget(self.btn)
 
-        w.setLayout(vbox)
-
+        w.setLayout( vbox )
 
 
     def finish(self):
@@ -218,140 +245,74 @@ class PegasusPlugin( ingestorservices.plugin.PluginBase ):
     def widget(self):
         return self.w
 
-    def onRequestSavePlaceHolder(self):
-
-        prop = self.properties[  'mandatory1' ]
-        prop.value = str(datetime.datetime.now() )
-
-        try:
-            name = self.properties[ 'name'].value
-
-            self.log('onRequestSavePlaceHolder %s' % name )
-
-            j = {}
-            j['name'] = name
-            j['mandatory1']  =self.properties[ 'mandatory1'].value
-            j['user1'] = self.properties[ 'user1'].value
-            j['user2'] = self.properties[ 'user2'].value
-
-            placeholder_path = self.path_spool / 'placeholder' 
-            placeholder_path.mkdir( parents=True, exist_ok=True)
-
-            path = placeholder_path / ('%s.json' % j['name'])
-            with open( path, 'w') as f:
-                json.dump( j, f )
-
-        except:
-            pass
-
     def onDataAvailable( self, *args ):
-        host_services = self.host_services
+        filePath = pathlib.Path( args[0] )
 
-        prop = self.properties[ 'mandatory1' ]
-        prop.value = str(datetime.datetime.now() )
+        if filePath.exists():
+            jsonFileRaw = extractPegasus(filePath.absolute())
+            jsonFileDict = json.loads(jsonFileRaw)
+   
+            propOwner = self.properties[ 'Owner' ]
+            propOwner.value = 'PEGASUS'
 
-        bagit_path = pathlib.Path( args[0] )
+            propOwnerGroup = self.properties[ 'Owner group' ]
+            propOwnerGroup.value = 'PEGASUS'
 
-        j_sm = {}
-        j_d = {}
+            propInvestigator = self.properties[ 'Investigator' ]
+            propInvestigator.value = 'PEGASUS'
 
-        if bagit_path.exists():
+            propEmail = self.properties[ 'Contact email' ]
+            propEmail.value = 'pegasus@ukaea.uk'
 
-            #extract data from bagit
+            propDate = self.properties[ 'Date' ]
+            dateRun = jsonFileDict['Stats'][0]['execution_info']['date_run']
+            propDate.value = datetime.datetime.strptime(dateRun, "%m/%d/%Y").strftime("%d/%m/%Y")
 
-            path = bagit_path.parent
-            name = path.name
+            propDataSource = self.properties[ 'Data source' ]
+            propDataSource.value = '/path/to/data'
 
-            self.log( 'bagit path : %s' % path )
+            propDataInput = self.properties[ 'Experimental source' ]
+            propDataInput.value = '/path/to/data'
 
-            try:
+            propDataSoftware = self.properties[ 'Software' ]
+            propDataSoftware.value = 'ANSYS Mechanical'
 
-                with open( path/'data/data.json', 'r' ) as f:
-                    j_d = json.load( f )
-                    #field1 = j_d['field1']
-                    #field2 = j_d['field2']
-                    #field3 = j_d['field3']
-                    #field4 = j_d['field4']
+            propExperimentData = self.properties[ 'Simulation data' ]
+            propExperimentData.value = jsonFileRaw
 
-            except Exception as e:
-                print(e)
-                pass
-
-            #is there a placeholder?
-            placeholder_id = name[3:]
-
-            try:
-                placeholder_path = self.path_spool / 'placeholder' / ('%s.json' %placeholder_id )
-
-                j_p = {}
-
-                with open( placeholder_path, 'r' ) as f:
-
-                    self.log(' Found placeholder : %s' % placeholder_path )
-
-                    j_p = json.load( f )
-
-                    #update tthe widget property
-                    for name,value in j_p.items():
-
-                        try:
-                            p = self.properties[ name ]
-                            p.value = value
-                        except:
-                            pass
-
-                j_sm = { **j_d, **j_p }
-
-
-            except Exception as e:
-                if e.errno == errno.ENOENT:
-                    self.log(' No placeholder :  %s' % placeholder_path )
-                else:
-                    self.log(' %s' % str(e))
-
-            self.log( j_sm )
-            
-            shutil.rmtree( bagit_path.parent )
-            try:
-                placeholder_path.unlink()
-            except:
-                pass
-
-            # # Create an Ownable that will get reused for several other Model objects
-            # ownable = metadata.Ownable(ownerGroup="magrathea", accessGroups=["deep_though"], createdBy=None, updatedBy=None, updatedAt=None, createdAt=None, instrumentGroup=None)
-
-            # name = 'bob'
-
-            # dataset = metadata.Dataset(
-            #         path='/foo/bar',
-            #         datasetName=str(name),
-            #         size=42,
-            #         owner="slartibartfast",
-            #         contactEmail="slartibartfast@magrathea.org",
-            #         creationLocation= 'magrathea',
-            #         creationTime=str(datetime.datetime.now()),
-            #         type="raw",
-            #         instrumentId="earth",
-            #         proposalId="deepthought",
-            #         dataFormat="planet",
-            #         principalInvestigator="A. Mouse",
-            #         sourceFolder='/foo/bar',
-            #         scientificMetadata= j_sm,
-            #         sampleId="gargleblaster",
-            #         version='1'
-            #         ,validatationStatus=1
-            #         ,**ownable.dict())
-
-            # dataset_id = host_services.requestDatasetSave( str(name), dataset )
-
-            # if dataset_id:
-            #     shutil.rmtree( bagit_path.parent )
-
-            #     try:
-            #         placeholder_path.unlink()
-            #     except:
-            #         pass
-
+    def onSubmitRequest(self):
+        # dataset = metadata.Dataset(
+        #     owner=self.properties['Owner'].value,
+        #     ownerGroup=self.properties['Owner group'].value,
+        #     investigator=self.properties['Investigator'].value,
+        #     contactEmail=self.properties['Contact email'].value,
+        #     sourceFolder=self.properties['Data source'].value,
+        #     inputDataset=[self.properties['Experimental source'].value],
+        #     usedSoftware=[self.properties['Software'].value],
+        #     creationTime=self.properties['Date'].value,
+        #     type="derived")
+        
+        # print('Submitting dataset:', dataset.__dict__)
+        # scicat = ScicatClient(base_url="http://localhost/api/v3",
+        #                 username="admin",
+        #                 password="2jf70TPNZsS")
+        # dataset_id = scicat.upload_new_dataset(dataset)
+        # print('Dataset submitted:', dataset_id)
+        client = setup_fake_client()
+        dset = Dataset(
+            owner=self.properties['Owner'].value,
+            owner_group=self.properties['Owner group'].value,
+            investigator=self.properties['Investigator'].value,
+            contact_email=self.properties['Contact email'].value,
+            source_folder=self.properties['Data source'].value,
+            input_datasets=[self.properties['Experimental source'].value],
+            used_software=[self.properties['Software'].value],
+            creation_time=self.properties['Date'].value,
+            meta=json.loads(self.properties['Simulation data'].value),
+            type="derived")
+        
+        dataset_id = client.upload_new_dataset_now(dset)
+        print('Dataset submitted:', dataset_id)
 
 class Factory:
 
@@ -367,4 +328,4 @@ def register_plugin_factory( host_services ):
 
     factory = Factory()
 
-    # host_services.register_plugin_factory( 'metadata_plugin', 'PegasusPlugin',  factory )
+    host_services.register_plugin_factory( 'metadata_plugin', 'PegasusPlugin',  factory )
