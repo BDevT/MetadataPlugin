@@ -21,6 +21,8 @@ import pathlib
 
 import watchdog.observers
 import watchdog.events
+from scitacean.testing.docs import setup_fake_client
+from scitacean import Client, Dataset
 
 class WorkerBase( threading.Thread):
     '''WorkerBase class serves as a base for other classes and provides a method stop() that notifies any threads waiting on a condition (cond_stop)'''
@@ -283,18 +285,19 @@ class HivePlugin( ingestorservices.plugin.PluginBase ):
             propExperimentData.value = combined_json_string
 
     def onSubmitRequest(self):
-        dataset = metadata.Dataset(
+        dataSet = Dataset(
             owner=self.properties['Owner'].value,
-            ownerGroup=self.properties['Owner group'].value,
-            principalInvestigator=self.properties['Principal Investigator'].value,
-            contactEmail=self.properties['Contact email'].value,
-            sourceFolder=self.properties['Data source'].value,
-            creationTime=self.properties['Date'].value,
-            creationLocation=self.properties['Location'].value,
-            scientificMetadata=json.loads(self.properties['Experiment data'].value),
-            type="raw")
-        
-        print('Submitting dataset:', dataset.__dict__)
+            owner_group=self.properties['Owner group'].value,
+            principal_investigator=self.properties['Principal Investigator'].value,
+            contact_email=self.properties['Contact email'].value,
+            source_folder=self.properties['Data source'].value,
+            creation_time=self.properties['Date'].value,
+            creation_location=self.properties['Location'].value,
+            meta=json.loads(self.properties['Experiment data'].value),
+            type="raw"
+        )
+
+        print(dataSet)
 
 class Factory:
 
