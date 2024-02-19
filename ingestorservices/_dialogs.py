@@ -4,7 +4,7 @@ from functools import partial
 
 from . import properties
 
-from . widgets import Widget, Label, LineEdit, BoxEdit, ComboBox, PushButton, HBoxLayout, VBoxLayout
+from . widgets import Widget, Label, LineEdit, PushButton, HBoxLayout, VBoxLayout
 
 
 def _on_widget_change( e, p, *args, **kwargs ):
@@ -20,6 +20,10 @@ def _on_widget_change( e, p, *args, **kwargs ):
         _type_ = type(p._value)
         p.value = _type_( args[0] )
 
+
+
+ 
+        
 
 def _on_property_change_update_widget( p, e, *args, **kwargs ):
     #print('on_property_change',p.name)
@@ -38,10 +42,32 @@ def _on_property_change_update_widget( p, e, *args, **kwargs ):
             #e.textChanged.emit( str(p.value) )
         elif isinstance( p.value, bool ):# p.type == Type.Boolean:
             e.setCheckState(  PySide6.QtCore.Qt.CheckState.Checked if p.value else  PySide6.QtCore.Qt.CheckState.Unchecked )
-    elif isinstance( p, properties.BoxProperty ):
-        e.setText( p.value )
 
 
+       
+
+
+#class _DialogBase(QDialog):
+#    def __init__(self, services):
+#        super().__init__()
+#        self._services = services
+#
+#    def initialise(self):
+#        return
+#
+#    @property
+#    def services(self):
+#        return self._services
+#
+#    def update(self, w, *args, **kwargs):
+#        return
+
+#class UserDialog( _DialogBase ):
+#    def __init__(self, services):
+#
+#        super().__init__( services )
+#        print('USER DLG __INIT__')
+#        return 
 def _property_group_2_layout( grp ):
 
     if grp.layout == properties.PropertyGroup.HORIZONTAL:
@@ -61,48 +87,6 @@ def _property_group_2_layout( grp ):
         
         g.addLayout( w )
 
-    return g
-
-def _property_group_3_layout( grp ):
-
-    if grp.layout == properties.PropertyGroup.HORIZONTAL:
-        g = HBoxLayout()
-    else:
-        g = VBoxLayout()
-
-    ps = grp.propertys
-    for i,x in enumerate(ps):
-        w = None
-
-        if isinstance( x, properties.PropertyGroup ):
-            pass
-            w = _property_group_3_layout( x )
-        else:
-            w = _property_3_layout( x )
-        
-        g.addLayout( w )
-    g._layout.setSpacing(20)
-    return g
-
-def _property_group_4_layout( grp ):
-    
-    if grp.layout == properties.PropertyGroup.HORIZONTAL:
-        g = HBoxLayout()
-    else:
-        g = VBoxLayout()
-
-    ps = grp.propertys
-    for i,x in enumerate(ps):
-        w = None
-
-        if isinstance( x, properties.PropertyGroup ):
-            pass
-            w = _property_group_4_layout( x )
-        else:
-            w = _property_4_layout( x )
-        
-        g.addLayout( w )
-    g._layout.setSpacing(20)
     return g
 
    
@@ -147,6 +131,7 @@ def _property_2_layout( p ):
             if isinstance( p.value, str ):
                 e = LineEdit.create()
                 e.setText( p.value )
+                #e = LineEdit( p.value )
                 f = partial( _on_widget_change, e, p)
                 p._on_widget_change = f
                 e.textChanged.connect( f )
@@ -203,180 +188,7 @@ def _property_2_layout( p ):
 
     return hbox
 
-def _property_3_layout( p ):
 
-    hbox = HBoxLayout()
-    vinBox = VBoxLayout()
-    if isinstance( p, properties.ButtonProperty ):
-        e = PushButton.create(p.name)
-        f = partial( _on_widget_change, e, p)
-        e.clicked.connect( f )
-        e.f_clicked = f
 
-        f = partial( _on_property_change_update_widget, p, e )
-        p.f = f
-        p.sig_changed.connect( f )
 
-    else:
 
-        label = Label.create( p.name )
-        vinBox.addWidget( label )
-        e = None
-
-        if isinstance( p, properties.ChoiceProperty ):
-
-            e = ComboBox.create( 'combo' )
-            print('44444', e )
-
-            for c in p.choices:
-                print( c )
-                e.addItem( c )
-                #e.insertItems( 0, p.choices )
-            f = partial( _on_widget_change, e, p)
-            e.setCurrentIndex( p.choice )
-            e.currentIndexChanged.connect( f )
-
-            f = partial( _on_property_change_update_widget, p, e )
-            p.f = f
-            p.sig_changed.connect( f )
-
-        if isinstance( p, properties.Property ):
-            if isinstance( p.value, str ):
-                e = BoxEdit.create()
-                e.setText( p.value )
-                f = partial( _on_widget_change, e, p)
-                p._on_widget_change = f
-                e.textChanged.connect( f )
-
-                f = partial( _on_property_change_update_widget, p, e )
-                p._on_property_change_update_widget = f
-                p.sig_changed.connect( f )
-
-            elif isinstance( p.value, numbers.Number ) and not isinstance(p.value, bool):
-                e = LineEdit.create()
-                e.setText( str(p.value) )
-                f = partial( _on_widget_change, e, p)
-                p._on_widget_change = f
-                e.textChanged.connect( f )
-
-                f = partial( _on_property_change_update_widget, p, e )
-                p._on_property_change_update_widget = f
-                p.sig_changed.connect( f )
-
-            elif isinstance( p.value, bool ):
-                e = CheckBox( p.name )
-                e.setCheckState( PySide6.QtCore.Qt.CheckState.Checked if p.value else PySide6.QtCore.Qt.CheckState.Unchecked )
-
-                f = partial( _on_widget_change, e, p)
-                e.stateChanged.connect( f )
-
-            elif isinstance( p.value, list ):
-                e = ComboBox()
-                e.insertItems( 0, p.value )
-                f = partial( _on_widget_change, e )
-                e.currentIndexChanged.connect( f )
-
-                f = partial( _on_property_change_update_widget, p, e )
-                p.sig_changed.connect( f )
-
-    if e:
-        vinBox.addWidget( e )
-
-    vinBox._layout.setSpacing(5)
-    return vinBox
-
-def _property_4_layout( p ):
-
-    vinBox = VBoxLayout()
-    if isinstance( p, properties.ButtonProperty ):
-        e = PushButton.create(p.name)
-        f = partial( _on_widget_change, e, p)
-        e.clicked.connect( f )
-        e.f_clicked = f
-
-        f = partial( _on_property_change_update_widget, p, e )
-        p.f = f
-        p.sig_changed.connect( f )
-
-    else:
-
-        label = Label.create( p.name )
-        vinBox.addWidget( label )
-        e = None
-
-        if isinstance( p, properties.ChoiceProperty ):
-
-            e = ComboBox.create( 'combo' )
-            print('44444', e )
-
-            for c in p.choices:
-                print( c )
-                e.addItem( c )
-                #e.insertItems( 0, p.choices )
-            f = partial( _on_widget_change, e, p)
-            e.setCurrentIndex( p.choice )
-            e.currentIndexChanged.connect( f )
-
-            f = partial( _on_property_change_update_widget, p, e )
-            p.f = f
-            p.sig_changed.connect( f )
-
-        if isinstance( p, properties.BoxProperty ):
-            if isinstance( p.value, str ):
-                e = BoxEdit.create()
-                e.setText( p.value )
-                e._w.setMinimumHeight( 300 )
-                f = partial( _on_widget_change, e, p)
-                p._on_widget_change = f
-                e.textChanged.connect( f )
-
-                f = partial( _on_property_change_update_widget, p, e )
-                p._on_property_change_update_widget = f
-                p.sig_changed.connect( f )
-
-        if isinstance( p, properties.Property ):
-            if isinstance( p.value, str ):
-                e = LineEdit.create()
-                e.setText( p.value )
-                f = partial( _on_widget_change, e, p)
-                p._on_widget_change = f
-                e.textChanged.connect( f )
-
-                f = partial( _on_property_change_update_widget, p, e )
-                p._on_property_change_update_widget = f
-                p.sig_changed.connect( f )
-
-            elif isinstance( p.value, numbers.Number ) and not isinstance(p.value, bool):
-                e = LineEdit.create()
-                e.setText( str(p.value) )
-                #e.setValidator( v )
-
-                f = partial( _on_widget_change, e, p)
-                p._on_widget_change = f
-                e.textChanged.connect( f )
-
-                f = partial( _on_property_change_update_widget, p, e )
-                p._on_property_change_update_widget = f
-                p.sig_changed.connect( f )
-
-            elif isinstance( p.value, bool ):
-                e = CheckBox( p.name )
-                e.setCheckState( PySide6.QtCore.Qt.CheckState.Checked if p.value else PySide6.QtCore.Qt.CheckState.Unchecked )
-
-                f = partial( _on_widget_change, e, p)
-                e.stateChanged.connect( f )
-
-            elif isinstance( p.value, list ):
-                e = ComboBox()
-                e.insertItems( 0, p.value )
-                f = partial( _on_widget_change, e )
-                e.currentIndexChanged.connect( f )
-
-                f = partial( _on_property_change_update_widget, p, e )
-                p.sig_changed.connect( f )
-
-    if e:
-        vinBox.addWidget( e )
-
-    vinBox._layout.setSpacing(5)
-    return vinBox

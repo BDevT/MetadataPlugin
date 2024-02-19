@@ -1,4 +1,5 @@
 from enum import Enum
+import threading
 
 import json
 
@@ -79,40 +80,7 @@ class Property(PropertyBase):
 
         self._direction = direction
 
-    @property
-    def direction(self) -> Direction :
-        return self._direction
-
-    @property
-    def validator(self):
-        return self._validator
-
-    @validator.setter
-    def validator(self, val : PropertyValidator):
-        self._validator = val
-
-
-    @property
-    def value(self):
-        return self._value
-    
-    @value.setter
-    def value( self, value ):
-        if isinstance( value, type(self._value) ):
-            if value != self._value:
-                self._value = value
-                self.sig_changed.emit( self )
-
-class BoxProperty(PropertyBase):
-
-    def __init__(self, name : str , value, direction : Direction = Direction.InOut, documentation : str = "", brief : str = "", validator = None ):
-        super().__init__(name, documentation=documentation, brief=brief)
-
-        self._validator = validator
-
-        self._value = value
-
-        self._direction = direction
+        self._lock = threading.Lock()
 
     @property
     def direction(self) -> Direction :
@@ -129,14 +97,28 @@ class BoxProperty(PropertyBase):
 
     @property
     def value(self):
-        return self._value
+        with self._lock:
+         return self._value
     
     @value.setter
     def value( self, value ):
-        if isinstance( value, type(self._value) ):
-            if value != self._value:
-                self._value = value
-                self.sig_changed.emit( self )
+
+        with self._lock:
+
+            #if isinstance( value, self._type ):
+            if isinstance( value, type(self._value) ):
+                if value != self._value:
+                    self._value = value
+
+                    self.sig_changed.emit( self )
+            #else:
+            #    #print(type(value), type(self.value))
+            #    raise PropertyTypeException()
+
+
+
+
+
 
 class ChoiceProperty(PropertyBase):
     def __init__( self, name : str, choices : list, choice : int, direction : Direction = Direction.InOut, documentation : str = "", brief :str = "" ):
@@ -155,13 +137,30 @@ class ChoiceProperty(PropertyBase):
             self._choice = val
             self.sig_changed.emit(self)
 
+#class PropertyTab(PropertyBase):
+#    def __init__(self, name):
+#        super().__init(name)
+#
+#        self.name_tabs = {}
+#
+#    def add_tab(self, name):
+#        tab_properties = {}
+#        self.name_tabs[ name ] = tab_properties
+#
+#        return tab_properties
+#
+#    def tabs(self):
+#        return self.tabs
+
 class ButtonProperty(PropertyBase):
     def __init__(self, name):
         super().__init__(name)
 
     def press(self):
         self.sig_changed.emit(self)
-        
+
+
+
 class PropertyGroup:
     VERTICAL=1
     HORIZONTAL=2
