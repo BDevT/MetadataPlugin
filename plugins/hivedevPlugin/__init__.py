@@ -22,6 +22,9 @@ import pathlib
 import watchdog.observers
 import watchdog.events
 
+from scitacean.testing.docs import setup_fake_client
+from scitacean import Dataset
+
 class WorkerBase( threading.Thread):
     '''WorkerBase class serves as a base for other classes and provides a method stop() that notifies any threads waiting on a condition (cond_stop)'''
     '''that a change has occurred, potentially used to indicate that the thread should stop its execution.'''
@@ -283,18 +286,24 @@ class HivePlugin( ingestorservices.plugin.PluginBase ):
             propExperimentData.value = combined_json_string
 
     def onSubmitRequest(self):
-        dataset = metadata.Dataset(
+        dataSet = Dataset(
             owner=self.properties['Owner'].value,
-            ownerGroup=self.properties['Owner group'].value,
-            principalInvestigator=self.properties['Principal Investigator'].value,
-            contactEmail=self.properties['Contact email'].value,
-            sourceFolder=self.properties['Data source'].value,
-            creationTime=self.properties['Date'].value,
-            creationLocation=self.properties['Location'].value,
-            scientificMetadata=json.loads(self.properties['Experiment data'].value),
-            type="raw")
-        
-        print('Submitting dataset:', dataset.__dict__)
+            owner_group=self.properties['Owner group'].value,
+            principal_investigator=self.properties['Principal Investigator'].value,
+            contact_email=self.properties['Contact email'].value,
+            source_folder=self.properties['Data source'].value,
+            creation_time=self.properties['Date'].value,
+            creation_location=self.properties['Location'].value,
+            meta=json.loads(self.properties['Experiment data'].value),
+            type="raw"
+        )
+
+        client = setup_fake_client()
+        finalized = client.upload_new_dataset_now(dataSet)
+ 
+        # Print PID Just for Demo
+        print("Data uploaded successfully")
+        print(f"PID: {finalized.pid.pid}")
 
 class Factory:
 
@@ -310,4 +319,4 @@ def register_plugin_factory( host_services ):
 
     factory = Factory()
 
-    #host_services.register_plugin_factory( 'metadata_plugin', 'HivePlugin',  factory )
+    host_services.register_plugin_factory( 'metadata_plugin', 'HivePlugin',  factory )
