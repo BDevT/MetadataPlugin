@@ -3,10 +3,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 from . _property import PropertyGroup
-from . _property import Property, ChoiceProperty, ButtonProperty, BoxProperty, PropertyBase
+from . _property import Property, ChoiceProperty, ButtonProperty
 from .. import core
 
-PropertyDict = core.TypeDict( str, PropertyBase )
+PropertyDict = core.TypeDict( str, Property )
 
 
 class PropertyContainer:
@@ -17,3 +17,5 @@ class PropertyContainer:
     @property
     def properties(self):
         return self._properties
+
+

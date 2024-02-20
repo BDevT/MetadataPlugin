@@ -47,9 +47,6 @@ class PropertyPlugin( ingestorservices.plugin.PluginBase ):
     def run(self):
         pass
 
-    def finish(self):
-        pass
-
 
 class PluginFactory:
 
@@ -58,7 +55,6 @@ class PluginFactory:
         w = PropertyPlugin(host_svcs)
 
         return w
-
 
 @log_decorator
 def register_plugin_factory( host_svcs ):

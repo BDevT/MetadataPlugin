@@ -26,8 +26,6 @@ class EmptyPlugin( ingestorservices.plugin.PluginBase ):
     def run(self):
         pass
 
-    def finish(self):
-        pass
 
 
 class EmptyFactory:

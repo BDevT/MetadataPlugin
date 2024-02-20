@@ -1,7 +1,7 @@
 from .... import widgets
 
 import PySide2.QtCore as QtCore
-from PySide2.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QComboBox, QTreeView, QSizePolicy, QTextEdit, QListWidget, QButtonGroup, QDialogButtonBox, QFrame
+from PySide2.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QComboBox, QSizePolicy, QTextEdit, QListWidget, QButtonGroup, QDialogButtonBox, QFrame 
 
 #class QLineEdit_(QLineEdit):
 #
@@ -54,6 +54,29 @@ class QLineEdit_(QLineEdit):
         self._bridge.signalSetText.connect( self.setText )
 
         #self.textChanged.connect( self.textChanged.emit )
+class QTextedit_(QTextEdit):
+
+    class Bridge( QtCore.QObject ):
+        signalSetText = QtCore.Signal(str)
+        signalTextChanged = QtCore.Signal(str)
+
+        def slotSetText( self, s ):
+            self.signalSetText.emit( s )
+
+        def slotTextChanged( self, *args ):
+            self.signalTextChanged.emit( *args )
+            print('Brigdge text changed')
+
+        
+
+    def __init__(self):
+        super().__init__()
+
+        self._bridge = QTextedit_.Bridge()
+
+        self._bridge.signalSetText.connect( self.setText )
+
+        #self.textChanged.connect( self.textChanged.emit )
 
 class QPushButton_( QPushButton ):
 
@@ -99,6 +122,17 @@ def createWidget( w ) -> QWidget:
         #self.signalSetText2.connect( self._w._bridge.signalSetText.emit )
 
         w.f_getText = lambda : qt_widget.text()
+
+    elif isinstance( w, widgets.TextEdit ):
+
+        qt_widget = QTextEdit_()
+        w.signalSetText.connect( qt_widget._bridge.signalSetText.emit )
+
+        qt_widget.textChanged.connect( w.textChanged.emit )
+        w.signalSetText.connect( qt_widget._bridge.slotSetText )
+
+        w.f_getText = lambda : qt_widget.text()
+
 
     elif isinstance( w, widgets.Label ):
         label = w.label

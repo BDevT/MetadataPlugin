@@ -99,7 +99,9 @@ class HostServices:
                     for finder, name, ispkg in pkgutil.iter_modules(path=_path, prefix=x+'.'):
 
                         try:
+                           # _ = importlib.import_module( name )
                             _ = importlib.import_module( name,x+'.' )
+
 
                             _.register_plugin_factory(self)
                         except Exception as e:
@@ -150,10 +152,12 @@ class HostServices:
         for name, plugin in self.plugins.items():
             plugin.join()
 
+
     @log_decorator
     def stop_plugins(self):
         for name, plugin in self.plugins.items():
             plugin.stop()
+
 
 
 

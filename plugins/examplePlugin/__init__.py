@@ -21,18 +21,17 @@ import threading
 import queue
 import pathlib
 
-import watchdog.observers
-import watchdog.events
+#import watchdog.observers
+#import watchdog.events
+
 
 class WorkerBase( threading.Thread):
     def __init__(self):
         super().__init__()
-        self.cond_stop = threading.Condition()
+        self.evt_stop = threading.Event()
 
     def stop(self):
-        
-        with self.cond_stop:
-            self.cond_stop.notify()
+        self.evt_stop.set()
 
 
 class RetryWorker( WorkerBase ):
@@ -47,40 +46,17 @@ class RetryWorker( WorkerBase ):
 
 
     def run(self):
-        with self.cond_stop:
-            while not self.cond_stop.wait(timeout=1):
+        while not self.evt_stop.wait(timeout=1):
 
-                try:
-                   paths = self.root.glob( './*/bagit.txt') 
+            try:
+               paths = self.root.glob( './*/bagit.txt') 
 
-                   for path in sorted(paths):
-                       self.q_out.put( path )
+               for path in sorted(paths):
+                   self.q_out.put( path )
 
-                except Exception as e:
-                    print(e)
+            except Exception as e:
+                print(e)
 
-
-class MyHandler( watchdog.events.FileSystemEventHandler ):
-    '''Watch for creation of bagit files using FileSystemEvents'''
-
-    signal = core.Signal()
-    def __init__(self, *args, **kwargs ):
-        super().__init__( *args, **kwargs )
-        self.last_created = None
-        self.last_time = datetime.datetime.min
-
-    def on_any_event(self, evt):
-        path = pathlib.Path(evt.src_path)
-        dt = datetime.timedelta(milliseconds=500)
-
-        if evt.event_type == 'created':
-
-                if path.name == 'bagit.txt':
-                    if path != self.last_created and datetime.datetime.now() - self.last_time > dt:
-                        self.last_created = path
-                        self.last_time = datetime.datetime.now()
-
-                        self.signal.emit( evt.src_path )
 
 
 class Producer( WorkerBase ):
@@ -100,23 +76,11 @@ class Producer( WorkerBase ):
         path.mkdir( parents=True, exist_ok=True)
 
         retry_worker = RetryWorker( path, self.q )
-        retry_worker.daemon = True
         retry_worker.start()
 
-        evt_handler = MyHandler()
+        while not self.evt_stop.wait(timeout=1):
+            pass
 
-        evt_handler.signal.connect( self.onNewBagit )
-
-        observer = watchdog.observers.Observer()
-        observer.schedule( evt_handler, path, recursive=True )
-
-        observer.start()
-
-        with self.cond_stop:
-            while not self.cond_stop.wait(timeout=1):
-                pass
-
-        observer.stop()
         retry_worker.stop() 
         retry_worker.join()
 
@@ -135,8 +99,7 @@ class Consumer( WorkerBase ):
         self.sigDataAvailable = core.Signal()
 
     def run(self):
-        with self.cond_stop:
-            while not self.cond_stop.wait(timeout=1):
+            while not self.evt_stop.wait(timeout=1):
                                      
                 self.count += 1
 
@@ -166,7 +129,6 @@ class ExamplePlugin( ingestorservices.plugin.PluginBase ):
         self.consumer.sigDataAvailable.connect( self.onDataAvailable )
 
         for t in [self.consumer, self.producer]:
-            t.daemon = True
             t.start()
 
         def requireProperty( name, value ):
@@ -215,10 +177,11 @@ class ExamplePlugin( ingestorservices.plugin.PluginBase ):
         w.setLayout( vbox )
 
     def run(self):
-        pass
+        self.producer.join()
+        self.consumer.join()
 
 
-    def finish(self):
+    def stop(self):
         self.producer.stop()
         self.consumer.stop()
 
@@ -227,6 +190,7 @@ class ExamplePlugin( ingestorservices.plugin.PluginBase ):
 
 
     def widget(self):
+        print(self.w)
         return self.w
 
     def onRequestSavePlaceHolder(self):
@@ -383,6 +347,7 @@ class Factory:
 
 @log_decorator
 def register_plugin_factory( host_services ):
+    print('XXXXXXXXX')
 
     factory = Factory()
 
