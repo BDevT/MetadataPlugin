@@ -19,22 +19,21 @@ import threading
 import queue
 import pathlib
 
-import watchdog.observers
-import watchdog.events
-from scitacean.testing.docs import setup_fake_client
-from scitacean import Client, Dataset
+#import watchdog.observers
+#import watchdog.events
+#from scitacean.testing.docs import setup_fake_client
+#from scitacean import Client, Dataset
 
 class WorkerBase( threading.Thread):
     '''WorkerBase class serves as a base for other classes and provides a method stop() that notifies any threads waiting on a condition (cond_stop)'''
     '''that a change has occurred, potentially used to indicate that the thread should stop its execution.'''
     def __init__(self):
         super().__init__()
-        self.cond_stop = threading.Condition()
+        self.evt_stop = threading.Event()
 
     def stop(self):
         
-        with self.cond_stop:
-            self.cond_stop.notify()
+            self.evt_stop.set()
 
 
 class RetryWorker( WorkerBase ):
@@ -51,8 +50,7 @@ class RetryWorker( WorkerBase ):
 
 
     def run(self):
-        with self.cond_stop:
-            while not self.cond_stop.wait(timeout=1):
+            while not self.evt_stop.wait(timeout=1):
 
                 try:
                    # get the path of the markdown file here - Ajay
@@ -63,29 +61,6 @@ class RetryWorker( WorkerBase ):
                 except Exception as e:
                     print(e)
 
-
-class MyHandler( watchdog.events.FileSystemEventHandler ):
-    '''MyHandler class is designed to handle file system events and specifically watches for the creation of files.'''
-    '''When a new bagit.txt file is created and the specified conditions are met, it emits a signal with the file's path.'''
-    '''Watch for creation of bagit files using FileSystemEvents'''
-
-    signal = core.Signal()
-    def __init__(self, *args, **kwargs ):
-        super().__init__( *args, **kwargs )
-        self.last_created = None
-        self.last_time = datetime.datetime.min
-
-    def on_any_event(self, evt):
-        path = pathlib.Path(evt.src_path)
-        dt = datetime.timedelta(milliseconds=500)
-
-        if evt.event_type == 'created':
-                if fnmatch.fnmatch(path.name, '*.md'):
-                    if path != self.last_created and datetime.datetime.now() - self.last_time > dt:
-                        self.last_created = path
-                        self.last_time = datetime.datetime.now()
-
-                        self.signal.emit( evt.src_path )
 
 
 class Producer( WorkerBase ):
@@ -110,23 +85,22 @@ class Producer( WorkerBase ):
         retry_worker.daemon = True
         retry_worker.start()
 
-        evt_handler = MyHandler()
+        #evt_handler = MyHandler()
         
         #when evt_handler emits a signal, onNewBagit method will be called.
-        evt_handler.signal.connect( self.onNewBagit )
+        #evt_handler.signal.connect( self.onNewBagit )
 
-        observer = watchdog.observers.Observer()
+        #observer = watchdog.observers.Observer()
 
         #Configures the observer to watch the path directory recursively for events and associates it with evt_handler.
-        observer.schedule( evt_handler, path, recursive=True )
+        #observer.schedule( evt_handler, path, recursive=True )
 
-        observer.start()
+        #observer.start()
 
-        with self.cond_stop:
-            while not self.cond_stop.wait(timeout=1):
-                pass
+        while not self.evt_stop.wait(timeout=1):
+            pass
 
-        observer.stop()
+        #observer.stop()
         retry_worker.stop() 
         retry_worker.join()
 
@@ -148,8 +122,7 @@ class Consumer( WorkerBase ):
         self.sigDataAvailable = core.Signal()
 
     def run(self):
-        with self.cond_stop:
-            while not self.cond_stop.wait(timeout=1):
+            while not self.evt_stop.wait(timeout=1):
                                      
                 self.count += 1
 
@@ -175,8 +148,10 @@ class HivePlugin( ingestorservices.plugin.PluginBase ):
         self.consumer.sigDataAvailable.connect( self.onDataAvailable )
 
         for t in [self.consumer, self.producer]:
-            t.daemon = True
+            #t.daemon = True
             t.start()
+
+        print('HIVE1')
 
         def requireProperty( name, value ):
 
@@ -194,7 +169,7 @@ class HivePlugin( ingestorservices.plugin.PluginBase ):
             try:
                 prop = self.properties( name )
             except Exception as e:
-                prop = services.properties.BoxProperty( name, value )
+                prop = services.properties.Property( name, value )
                 self.properties[ prop.name ] = prop
 
             return prop
@@ -206,7 +181,11 @@ class HivePlugin( ingestorservices.plugin.PluginBase ):
         prop_sourceFolder = requireProperty( 'Data source', '' )
         prop_creationDate = requireProperty( 'Date', '' )
         prop_location = requireProperty( 'Location', '' )
+
+        print('HIVE2')
         prop_experimentData = boxProperty( 'Experiment data', '' )
+
+        print('HIVE4')
 
         w = widgets.Widget.create()
         self.w = w
@@ -222,7 +201,7 @@ class HivePlugin( ingestorservices.plugin.PluginBase ):
         pg.add( prop_creationDate)
         pg.add( prop_location )
         pg.add( prop_experimentData )
-        mainMetadataLayout =  services._property_group_4_layout( pg )
+        mainMetadataLayout =  services._property_group_2_layout( pg )
         vbox.addLayout(mainMetadataLayout)
 
         # Add submit button
@@ -232,8 +211,18 @@ class HivePlugin( ingestorservices.plugin.PluginBase ):
 
         w.setLayout( vbox )
 
+        print('HIVE6')
 
-    def finish(self):
+    def run(self):
+        print('RUNNNING')
+        for t in [self.consumer, self.producer]:
+            #t.daemon = True
+            t.join()
+
+
+
+
+    def stop(self):
         self.producer.stop()
         self.consumer.stop()
 
@@ -313,4 +302,4 @@ def register_plugin_factory( host_services ):
 
     factory = Factory()
 
-    #host_services.register_plugin_factory( 'metadata_plugin', 'HivePlugin',  factory )
+    host_services.register_plugin_factory( 'metadata_plugin', 'HivePlugin',  factory )
