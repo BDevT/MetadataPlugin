@@ -53,7 +53,6 @@ class PropertyBase:
         self._documenattion = documentation
         self._brief = brief
 
-        #self.sig_changed = widgets.Signal()
         self.sig_changed = core.Signal()
 
     @property
@@ -71,8 +70,8 @@ class PropertyTypeException( PropertyException ):
 
 class Property(PropertyBase):
 
-    def __init__(self, name : str , value, direction : Direction = Direction.InOut, documentation : str = "", brief : str = "", validator = None ):
-        super().__init__(name, documentation=documentation, brief=brief)
+    def __init__(self, name : str , value, direction : Direction = Direction.InOut, documentation : str = "", brief : str = "", validator = None, **kwargs ):
+        super().__init__(name, documentation=documentation, brief=brief )
 
         self._validator = validator
 
@@ -80,7 +79,8 @@ class Property(PropertyBase):
 
         self._direction = direction
 
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
+        self.kwargs = kwargs
 
     @property
     def direction(self) -> Direction :
@@ -105,18 +105,15 @@ class Property(PropertyBase):
 
         with self._lock:
 
-            #if isinstance( value, self._type ):
             if isinstance( value, type(self._value) ):
                 if value != self._value:
                     self._value = value
 
                     self.sig_changed.emit( self )
+
             #else:
             #    #print(type(value), type(self.value))
             #    raise PropertyTypeException()
-
-
-
 
 
 

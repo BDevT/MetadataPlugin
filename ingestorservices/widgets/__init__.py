@@ -160,7 +160,7 @@ class Label(Widget):
 class LineEdit(Widget):
 
     @staticmethod
-    def create():
+    def create( *args, **kwargs):
         w = LineEdit()
         w.initialise()
         return w
@@ -192,7 +192,32 @@ class LineEdit(Widget):
         print('#NNNNNNNNN')
         return self.f_getText()
 
-        #return self._w.text()
+class TextEdit( Widget ):
+    @staticmethod
+    def create( *args, **kwargs):
+        w = TextEdit()
+        w.initialise()
+        return w
+
+    def __init__(self):
+        super().__init__()
+
+        self.textChanged = self.register_signal()
+        self.returnPressed = self.register_signal()
+
+        self.signalSetText = self.register_signal()
+
+        self.f_getText = None
+
+    def initialise(self):
+        return self
+
+    def setText(self, s):
+        self.signalSetText.emit( s )
+
+    def getText( self):
+        return self.f_getText()
+
 
 #class ComboBox(Widget):
 #    @staticmethod

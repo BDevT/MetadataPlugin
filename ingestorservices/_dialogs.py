@@ -129,7 +129,14 @@ def _property_2_layout( p ):
 
         if isinstance( p, properties.Property ):
             if isinstance( p.value, str ):
-                e = LineEdit.create()
+                if 'multiline' in p.kwargs:
+                    e = TextEdit.create()
+                else:
+                    e = LineEdit.create( p.kwargs )
+
+
+                #e = LineEdit.create( p.kwargs )
+
                 e.setText( p.value )
                 #e = LineEdit( p.value )
                 f = partial( _on_widget_change, e, p)

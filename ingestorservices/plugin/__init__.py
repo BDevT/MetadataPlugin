@@ -12,7 +12,6 @@ log_decorator = core.create_logger_decorator( logger )
 class PluginBase:
 
     def __init__(self, host_services ):
-        #super().__init__()
 
         self.host_services = host_services
 
