@@ -1,11 +1,10 @@
 import errno
 import datetime
-import fnmatch
 import random
-import shutil
 import time
 import json
 import logging
+import shutil
 
 logger = logging.getLogger( __name__ )
 
@@ -15,34 +14,27 @@ import ingestorservices.core as core
 import ingestorservices.metadata as metadata
 import ingestorservices.plugin
 
+
 log_decorator = core.create_logger_decorator( logger )
 
 import threading
 import queue
 import pathlib
 
-import watchdog.observers
-import watchdog.events
+#import watchdog.observers
+#import watchdog.events
 
-import subprocess
-import os
 
 class WorkerBase( threading.Thread):
-    '''WorkerBase class serves as a base for other classes and provides a method stop() that notifies any threads waiting on a condition (cond_stop)'''
-    '''that a change has occurred, potentially used to indicate that the thread should stop its execution.'''
     def __init__(self):
         super().__init__()
-        self.cond_stop = threading.Condition()
+        self.evt_stop = threading.Event()
 
     def stop(self):
-        
-        with self.cond_stop:
-            self.cond_stop.notify()
+        self.evt_stop.set()
 
 
 class RetryWorker( WorkerBase ):
-    '''RetryWorker class periodically checks for bagit files in a specified directory (root) and puts their paths into a queue (q_out)'''
-    '''for further processing, all while waiting for a signal to stop its execution.'''
     '''Periodically check for bagit files in spool path'''
 
     def __init__(self, path, q_out):
@@ -54,55 +46,20 @@ class RetryWorker( WorkerBase ):
 
 
     def run(self):
-        with self.cond_stop:
-            while not self.cond_stop.wait(timeout=1):
+        while not self.evt_stop.wait(timeout=1):
 
-                try:
-                   # get the path of the markdown file here - Ajay
-                   paths = self.root.glob( './*/*.md')
-                   print(f"RetryWorker - Paths =   '{paths}'")
-                   #paths = self.root.glob( './*/bagit.txt') 
+            try:
+               paths = self.root.glob( './*/bagit.txt') 
 
-                   for path in sorted(paths):
-                       self.q_out.put( path )
+               for path in sorted(paths):
+                   self.q_out.put( path )
 
-                except Exception as e:
-                    print(e)
+            except Exception as e:
+                print(e)
 
-
-class MyHandler( watchdog.events.FileSystemEventHandler ):
-    '''MyHandler class is designed to handle file system events and specifically watches for the creation of bagit.txt files.'''
-    '''When a new bagit.txt file is created and the specified conditions are met, it emits a signal with the file's path.'''
-    '''Watch for creation of bagit files using FileSystemEvents'''
-
-    signal = core.Signal()
-    def __init__(self, *args, **kwargs ):
-        super().__init__( *args, **kwargs )
-        self.last_created = None
-        self.last_time = datetime.datetime.min
-
-    def on_any_event(self, evt):
-        path = pathlib.Path(evt.src_path)
-        dt = datetime.timedelta(milliseconds=500)
-
-        if evt.event_type == 'created':
-
-                #Ajay
-                if fnmatch.fnmatch(path.name, '*.md'):
-                #if path.name == 'bagit.txt':
-                    #Ajay
-                    print("RetryWorker - fnmatch.fnmatch(path.name, '*.md') TREU")
-
-                    if path != self.last_created and datetime.datetime.now() - self.last_time > dt:
-                        self.last_created = path
-                        self.last_time = datetime.datetime.now()
-
-                        self.signal.emit( evt.src_path )
 
 
 class Producer( WorkerBase ):
-    '''Producer class sets up file system monitoring using RetryWorker and MyHandler, creating workers, observing file system events,'''
-    '''and managing threads to generate trigger events based on detected changes.'''
     ''' Generate trigger events using the RetryWorker and the MyHandler '''
 
     def __init__(self, q, path_spool = '/tmp/spool'):
@@ -119,26 +76,11 @@ class Producer( WorkerBase ):
         path.mkdir( parents=True, exist_ok=True)
 
         retry_worker = RetryWorker( path, self.q )
-        retry_worker.daemon = True
         retry_worker.start()
 
-        evt_handler = MyHandler()
-        
-        #when evt_handler emits a signal, onNewBagit method will be called.
-        evt_handler.signal.connect( self.onNewBagit )
+        while not self.evt_stop.wait(timeout=1):
+            pass
 
-        observer = watchdog.observers.Observer()
-
-        #Configures the observer to watch the path directory recursively for events and associates it with evt_handler.
-        observer.schedule( evt_handler, path, recursive=True )
-
-        observer.start()
-
-        with self.cond_stop:
-            while not self.cond_stop.wait(timeout=1):
-                pass
-
-        observer.stop()
         retry_worker.stop() 
         retry_worker.join()
 
@@ -146,9 +88,6 @@ class Producer( WorkerBase ):
         self.q.put( path )
 
 class Consumer( WorkerBase ):
-    '''Consumer class is designed to continuously run in a thread, checking the input queue for data. When data is available in the queue, it emits a signal'''
-    '''(sigDataAvailable) with the retrieved data and proceeds with further tasks if any, continually checking the queue for more data to process.'''
-    
     '''Recieve event paths '''
 
     def __init__(self, q_in ):
@@ -160,8 +99,7 @@ class Consumer( WorkerBase ):
         self.sigDataAvailable = core.Signal()
 
     def run(self):
-        with self.cond_stop:
-            while not self.cond_stop.wait(timeout=1):
+            while not self.evt_stop.wait(timeout=1):
                                      
                 self.count += 1
 
@@ -175,11 +113,9 @@ class Consumer( WorkerBase ):
                     pass
 
 
-class HivePlugin( ingestorservices.plugin.PluginBase ):
+class ExamplePlugin( ingestorservices.plugin.PluginBase ):
     '''Wait for bagit events. Extract metadata from placeholder and bagit file before writing to backend '''
 
-    #This method essentially initializes the HivePlugin object, creating threads for the producer and consumer, connecting signals, 
-    # and setting up a GUI widget with properties and buttons for user interaction.
     def __init__(self, host_services):
         super().__init__(host_services)
 
@@ -190,14 +126,9 @@ class HivePlugin( ingestorservices.plugin.PluginBase ):
         self.producer = Producer(self.q)
 
         self.consumer = Consumer( self.q )
-
-        #Sets up the signal-slot mechanism where the Consumer's sigDataAvailable signal is connected to the onDataAvailable method. 
-        # This establishes a communication link between the consumer and the onDataAvailable method, meaning that 
-        # whenever data is available in the consumer, it triggers the onDataAvailable method.
         self.consumer.sigDataAvailable.connect( self.onDataAvailable )
 
         for t in [self.consumer, self.producer]:
-            t.daemon = True
             t.start()
 
         def requireProperty( name, value ):
@@ -223,7 +154,7 @@ class HivePlugin( ingestorservices.plugin.PluginBase ):
 
         vbox = widgets.VBoxLayout()
 
-        label = widgets.Label.create('Hive plugin widget')
+        label = widgets.Label.create('Example plugin widget')
         vbox.addWidget( label )
 
         w.setLayout( vbox )
@@ -245,8 +176,12 @@ class HivePlugin( ingestorservices.plugin.PluginBase ):
 
         w.setLayout( vbox )
 
+    def run(self):
+        self.producer.join()
+        self.consumer.join()
 
-    def finish(self):
+
+    def stop(self):
         self.producer.stop()
         self.consumer.stop()
 
@@ -255,17 +190,20 @@ class HivePlugin( ingestorservices.plugin.PluginBase ):
 
 
     def widget(self):
+        print(self.w)
         return self.w
 
     def onRequestSavePlaceHolder(self):
 
-        # onRequestSavePlaceHolder method updates the 'mandatory1' property, retrieves the 'name' property, logs a message, 
-        # creates a dictionary from relevant properties, and saves this dictionary as a JSON file in the placeholder directory.
+        print('SAVEXXXXXXXXX')
+
         prop = self.properties[  'mandatory1' ]
-        prop.value = str(datetime.datetime.now())
+        prop.value = str(datetime.datetime.now() )
 
         try:
             name = self.properties[ 'name'].value
+
+            print('NAME:%s:'%name )
 
             self.log('onRequestSavePlaceHolder %s' % name )
 
@@ -286,99 +224,55 @@ class HivePlugin( ingestorservices.plugin.PluginBase ):
             pass
 
     def onDataAvailable( self, *args ):
-        # This method is called when data becomes available in the Consumer. It processes the bagit data and saves it as a dataset.
+        print('DATAXXXXXXX')
         host_services = self.host_services
 
         prop = self.properties[ 'mandatory1' ]
         prop.value = str(datetime.datetime.now() )
 
-        #args[0] is the path of the bagit file
         bagit_path = pathlib.Path( args[0] )
 
-        # Initialize an empty dictionary for merged JSON data
-        # Initialize an empty dictionary for bagit JSON data
         j_sm = {}
         j_d = {}
 
         if bagit_path.exists():
 
             #extract data from bagit
-            # bagit path : /tmp/spool/bags/bag8
-            # bagit name : bag8
+
             path = bagit_path.parent
             name = path.name
-            
-            # get the name of the extracted json from markdown
-            json_files = [file for file in os.listdir(path) if file.endswith('.json')]
-            json_filename = None 
-            for json_file in json_files:
-                json_filename = json_file
-                
+
             self.log( 'bagit path : %s' % path )
-            self.log( 'bagit name : %s' % name )
-            self.log( 'json_filename name : %s' % json_filename )
 
-            #### -  Ajay Insert code to extract json from markdown file
-           
-            # Arguments to be passed to call markdown_json.py  to extract the json from markdown
-            arguments_for_json_extract = [path, path]
-            # Construct the command to call a.py with arguments
-            command = ["python3", "markdown_json.py"] + arguments_for_json_extract
-
-            # Use subprocess to call markdown_json.py
-            subprocess.run(command)
-            
             try:
-                # Json extraction 
-                #with open(path / (name + '.json'), 'r') as f:
-                # added to get the json extracted from the markdown file
-                with open(path / json_filename, 'r') as f:    
+
+                with open( path/'data/data.json', 'r' ) as f:
                     j_d = json.load( f )
                     #field1 = j_d['field1']
                     #field2 = j_d['field2']
                     #field3 = j_d['field3']
                     #field4 = j_d['field4']
-                    #Ajay Rawat
-                    owner = j_d['HIVE testing log'][0]['Operators']
-                    print('*** OWNER')
-                    print(owner[0])
-                    ##
-                    print(f"The Extracted JSON from Markdown is = {json_filename}")
+
             except Exception as e:
                 print(e)
                 pass
 
-            ###### END #####
-
-            # removed the logic and added above code to extracted json from the markdown file
-            # try:
-            #     # Json extraction 
-            #     with open( path/'data/data.json', 'r' ) as f:
-            #         j_d = json.load( f )
-            #         #field1 = j_d['field1']
-            #         #field2 = j_d['field2']
-            #         #field3 = j_d['field3']
-            #         #field4 = j_d['field4']
-
-            # except Exception as e:
-            #     print(e)
-            #     pass
-
             #is there a placeholder?
             placeholder_id = name[3:]
-            print(f"Place holder id = '{placeholder_id}'")
+
+            print('NAMEXXXXXXXX', placeholder_id )
 
             try:
                 placeholder_path = self.path_spool / 'placeholder' / ('%s.json' %placeholder_id )
-                print(f"placeholder_path = '{placeholder_path}'")
+
                 j_p = {}
 
                 with open( placeholder_path, 'r' ) as f:
+
                     self.log(' Found placeholder : %s' % placeholder_path )
 
                     j_p = json.load( f )
-                    print(" ----------The Placeholder JSON is as: ---------")
-                    print(j_p)
+
                     #update tthe widget property
                     for name,value in j_p.items():
 
@@ -389,8 +283,7 @@ class HivePlugin( ingestorservices.plugin.PluginBase ):
                             pass
 
                 j_sm = { **j_d, **j_p }
-                print(" ----------The Merged JSON is as: ---------")
-                print(j_sm)
+
 
             except Exception as e:
                 if e.errno == errno.ENOENT:
@@ -401,50 +294,61 @@ class HivePlugin( ingestorservices.plugin.PluginBase ):
             self.log( j_sm )
 
             # Create an Ownable that will get reused for several other Model objects
-            ownable = metadata.Ownable(ownerGroup="magrathea", createdBy=None, updatedBy=None, updatedAt=None, createdAt=None, instrumentGroup=None)
+            ownable = metadata.Ownable(ownerGroup="magrathea", accessGroups=["deep_though"], createdBy=None, updatedBy=None, updatedAt=None, createdAt=None, instrumentGroup=None)
 
-            name = 'bob' #HIVE testing log + date in the log line 4 change it format
-            
+            name = 'bob'
+
+            print('SSSSSS')
+            ownable_dict = ownable.dict()
+            print('FFFFFFf')
+
             dataset = metadata.Dataset(
-                    
-                    #Ajay Rawat
-                    #owner = ['HIVE testing log'][0]['Operators'][0],
-                    owner="slartibartfast", #json
-                    contactEmail="slartibartfast@magrathea.org", #dummy
+                    path='/foo/bar',
+                    datasetName=str(name),
+                    size=42,
+                    owner="slartibartfast",
+                    contactEmail="slartibartfast@magrathea.org",
                     creationLocation= 'magrathea',
                     creationTime=str(datetime.datetime.now()),
                     type="raw",
-                    principalInvestigator="A. Mouse", # owner
-                    sourceFolder='/foo/bar', # dummy
-                    scientificMetadata=j_sm,
-                    **ownable.dict()) # owner group
+                    instrumentId="earth",
+                    proposalId="deepthought",
+                    dataFormat="planet",
+                    principalInvestigator="A. Mouse",
+                    sourceFolder='/foo/bar',
+                    scientificMetadata= j_sm,
+                    sampleId="gargleblaster",
+                    version='1'
+                    ,validatationStatus=1
+                    ,**ownable.dict())
 
-            # dataset_id = host_services.requestDatasetSave( str(name), dataset )
+            print('TRY1', name, dataset, host_services)
+            dataset_id = host_services.requestDatasetSave( dataset )
 
-            # if dataset_id:
-            #     shutil.rmtree( bagit_path.parent )
+            print('TRY2', dataset_id)
 
-            #     try:
-            #         placeholder_path.unlink()
-            #     except:
-            #         pass
-            
-            # Ajay Rawat
-            # added to extract value from Json based on the key passed
-    
+            if dataset_id:
+                shutil.rmtree( bagit_path.parent )
+
+                try:
+                    placeholder_path.unlink()
+                except:
+                    pass
+
 
 class Factory:
 
     def __call__(self, host_services):
 
-        plugin = HivePlugin(host_services)
+        plugin = ExamplePlugin(host_services)
 
         return plugin
 
 
 @log_decorator
 def register_plugin_factory( host_services ):
+    print('XXXXXXXXX')
 
     factory = Factory()
 
-    host_services.register_plugin_factory( 'metadata_plugin', 'HivePlugin',  factory )
+    host_services.register_plugin_factory( 'metadata_plugin', 'ExamplePlugin',  factory )

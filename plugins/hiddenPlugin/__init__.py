@@ -10,41 +10,11 @@ logger = logging.getLogger( __name__ )
 import ingestorservices as services
 
 import ingestorservices.properties as properties
-#import ingestorservices.widgets as widgets
 import ingestorservices.core as core
 import ingestorservices.metadata as metadata
 import ingestorservices.plugin
 
 log_decorator = core.create_logger_decorator( logger )
-
-class Worker( threading.Thread):
-    def __init__(self, host):
-        super().__init__()
-        self.host = host
-        self.cond_stop = threading.Condition()
-
-
-    def stop(self):
-        with self.cond_stop:
-            self.cond_stop.notify()
-
-    def run(self):
-        with self.cond_stop:
-            while not self.cond_stop.wait(timeout=1):
-
-                s = 'tick - %s' % str(datetime.datetime.now())
-
-                self.host.log('%s' %  s )
-
-                id_plugins = self.host.host_services.plugins
-
-                plugin = id_plugins[ 'PropertyPlugin' ]
-
-                p_f1 = plugin.properties[ 'field1' ]
-
-                p_f1.value = s
-
-
 
 class HiddenPlugin( ingestorservices.plugin.PluginBase ):
 
@@ -56,6 +26,8 @@ class HiddenPlugin( ingestorservices.plugin.PluginBase ):
     def __init__(self, host_svcs):
         super().__init__(host_svcs)
 
+        self.evt_stop = threading.Event()
+
         f1 = properties.Property( 'field1', 'value')
         f2 = properties.Property( 'field2', 'value')
         f3 = properties.Property( 'field3', 'value')
@@ -64,13 +36,26 @@ class HiddenPlugin( ingestorservices.plugin.PluginBase ):
             f.sig_changed.connect( self.on_sig_changed)
             self.properties[ f.name ] = f
 
-        self.worker = Worker(self)
-        self.worker.daemon = True
-        self.worker.start()
+    def run(self):
 
-    def finish(self):
-        self.worker.stop()
-        self.worker.join()
+        while not self.evt_stop.wait(timeout=1.0):
+
+            s = 'tick - %s' % str(datetime.datetime.now())
+
+            self.log('%s' %  s )
+
+            id_plugins = self.host_services.plugins
+
+            plugin = id_plugins[ 'PropertyPlugin' ]
+
+            p_f1 = plugin.properties[ 'field1' ]
+
+            p_f1.value = s
+
+
+    def stop(self):
+        self.evt_stop.set()
+        super().stop()
 
 
 class HiddenFactory:

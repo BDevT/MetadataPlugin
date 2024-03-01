@@ -1,4 +1,5 @@
 from enum import Enum
+import threading
 
 import json
 
@@ -52,7 +53,6 @@ class PropertyBase:
         self._documenattion = documentation
         self._brief = brief
 
-        #self.sig_changed = widgets.Signal()
         self.sig_changed = core.Signal()
 
     @property
@@ -70,14 +70,17 @@ class PropertyTypeException( PropertyException ):
 
 class Property(PropertyBase):
 
-    def __init__(self, name : str , value, direction : Direction = Direction.InOut, documentation : str = "", brief : str = "", validator = None ):
-        super().__init__(name, documentation=documentation, brief=brief)
+    def __init__(self, name : str , value, direction : Direction = Direction.InOut, documentation : str = "", brief : str = "", validator = None, **kwargs ):
+        super().__init__(name, documentation=documentation, brief=brief )
 
         self._validator = validator
 
         self._value = value
 
         self._direction = direction
+
+        self._lock = threading.RLock()
+        self.kwargs = kwargs
 
     @property
     def direction(self) -> Direction :
@@ -94,23 +97,23 @@ class Property(PropertyBase):
 
     @property
     def value(self):
-        return self._value
+        with self._lock:
+         return self._value
     
     @value.setter
     def value( self, value ):
 
-        #if isinstance( value, self._type ):
-        if isinstance( value, type(self._value) ):
-            if value != self._value:
-                self._value = value
+        with self._lock:
 
-                self.sig_changed.emit( self )
-        #else:
-        #    #print(type(value), type(self.value))
-        #    raise PropertyTypeException()
+            if isinstance( value, type(self._value) ):
+                if value != self._value:
+                    self._value = value
 
+                    self.sig_changed.emit( self )
 
-
+            #else:
+            #    #print(type(value), type(self.value))
+            #    raise PropertyTypeException()
 
 
 

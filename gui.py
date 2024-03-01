@@ -1,18 +1,24 @@
-import PySide6.QtCore as QtCore
-#import PySide6.QtGui as QtGui
-import PySide6.QtWidgets as QtWidgets
+import PySide2.QtCore as QtCore
+#import PySide2.QtGui as QtGui
+import PySide2.QtWidgets as QtWidgets
 
 import os
 import sys
 #import json
+import argparse
 import logging
 import traceback
+import collections
+import urllib.parse
+import pathlib
 import collections
 
 import ingestorservices as services
 import ingestorservices.widgets as widgets
 import ingestorservices.properties as properties
 import ingestorservices.core as core
+
+import ingestorservices.widgets.bindings.pyside2 as bindings
 
 logger = logging.getLogger( __name__ )
 log_decorator = core.create_logger_decorator( logger )
@@ -102,12 +108,46 @@ class LoginWidget( QtWidgets.QWidget ):
 
     @log_decorator
     def slotOnBtnLogin(self, *args):
+        print(args)
         
         user = self.user_edit.text()
         pw = self.pw_edit.text()
+        #scicat_host = self.scicat_server
 
-        url_root = 'http://localhost/api/v3'
-        res = self._cbk_login( url_root, user, pw )
+        #SCICAT_HOST='SCICAT_HOST'
+
+        #scicat_host = os.getenv( SCICAT_HOST, 'http://localhost' ) 
+
+        #o = urllib.parse.urlsplit( scicat_host )
+
+        #if not o.scheme:
+        #    print('AAAAAAAAAAA')
+        #    o = urllib.parse.urlsplit( scicat_host, scheme='http' )
+        #    scicat_host = o.geturl()
+        #    print(scicat_host )
+        #else:
+        #    print('BBBBBBBBB')
+            
+        #namedtuple to match the internal signature of urlunparse
+        #UrlComponents = collections.namedtuple(
+        #    typename='UrlComponents', 
+        #    field_names=['scheme', 'netloc', 'path',  'query', 'fragment'])
+
+        #c = UrlComponents(scheme=o.scheme, netloc=o.netloc,query='', path=o.path, fragment='')
+        #url = urllib.parse.urlunsplit( c ) 
+
+        #print(o)
+        #print(c)
+        #print(url)
+        ##print(2, scicat_host )
+        #url_root = urllib.parse.urljoin( scicat_host, 'api/v3' )
+        url_root='badurl'
+
+
+        #print('XXXXXXXXXXX')
+        #print(url_root )
+
+        res = self._cbk_login( user, pw )
 
         if ERR_NONE == res:
             self.btn_logout.setEnabled( True )
@@ -144,7 +184,8 @@ def getProxyModel( node ):
 
     return proxyModel
 
-
+def myprint( *args, **kwargs ):
+    print( *args )
 
 
 class TextConsole( QtWidgets.QPlainTextEdit ):
@@ -173,26 +214,48 @@ class MainWindow(QtWidgets.QMainWindow):
         self.host_services.logout()
 
     @log_decorator
-    def loginSciCat(self, base_url, username, password ):
-        res = self.host_services.login(base_url,  username, password )
+    def loginSciCat(self, username, password ):
+        #res = self.host_services.login(base_url,  username, password )
+        scicat_host = self.scicat_server 
+
+        url_root = self.scicat_server 
+
+
+        if not url_root.endswith('/' ):
+            url_root = url_root + '/'
+
+        url = url_root + 'api/v3' 
+ 
+        print('XXX', url)
+        res = self.host_services.login( url,  username, password )
+
         return res
         
 
-    def __init__(self):
+    def __init__(self, server='localhost'):
         super().__init__()
 
-        self.host_services = services.HostServices( self )
+        self.scicat_server = server
+
+        self.host_services = services.HostServices()
 
         self.qtbridge = MainWindow.QtBridge()
         
         #start the plugins. This needs to be done before the UI is created
-        self.host_services.start()
+        self.host_services.load_plugins()
+        
+        for name, plugin in self.host_services.plugins.items():
+
+            plugin.initialise()
+
+            plugin.start()
+
 
         self.setupUI()
 
     @log_decorator
     def closeEvent( self, *args, **kwargs ):
-        self.host_services.finish()
+        self.host_services.stop_plugins()
                 
     @log_decorator
     def setupUI(self):
@@ -211,8 +274,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         login_widget = LoginWidget( self.loginSciCat, self.logoutSciCat)
         
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget( login_widget )
+        qtlayout = QtWidgets.QVBoxLayout()
+        qtlayout.addWidget( login_widget )
 
         host_services = self.host_services
 
@@ -224,10 +287,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 try:
                     widget = plugin.widget()
-                    qtwidget = widget.internal_widget()
+                    print('XXX', widget )
 
-                    layout.addWidget( qtwidget )
+                    qtwidget = bindings.createWidget( widget )
+
+                    qtlayout.addWidget( qtwidget )
                 except Exception as e:
+                    print(name)
 
                     try:
                         l0 = widgets.VBoxLayout()
@@ -236,31 +302,37 @@ class MainWindow(QtWidgets.QMainWindow):
                         l0.addWidget( label )
 
                         pg = plugin.property_group()
+                        print('XXXX', pg )
 
                         l =  services._property_group_2_layout( pg )
 
+                        print('BOO')
                         l0.addLayout( l )
+
+
                         w = widgets.Widget.create()
                         w.setLayout( l0 )
-                        qtw = w.internal_widget()
 
-                        layout.addWidget( qtw )
-                    except:
+                        qtw = bindings.createWidget( w )
+
+                        qtlayout.addWidget( qtw )
+                    except Exception as e:
+                        print(e)
                         pass
                     
                 if plugin:
-                    self.host_services.log( 'Started %s' % plugin )
+                    plugin.log( 'Started %s' % plugin )
 
         except Exception as e:
             print(e)
             PrintException()
 
-        layout.addWidget( self.te )
+        qtlayout.addWidget( self.te )
 
-        container = QtWidgets.QWidget()
-        container.setLayout(layout)
+        qtcontainer = QtWidgets.QWidget()
+        qtcontainer.setLayout(qtlayout)
 
-        self.setCentralWidget(container)
+        self.setCentralWidget(qtcontainer)
 
 
 
@@ -287,6 +359,14 @@ if __name__ == '__main__':
     app_log_lvl = os.getenv( ENV_LOG_LVL, LOG_LVL_NONE )
 
 
+    parser = argparse.ArgumentParser(
+        prog='MetadataHost',
+        description='Metadata plugin host')
+
+    parser.add_argument('--host', default='localhost')
+
+    args = parser.parse_args()
+
     try:
         log_lvl = log_lvl_map[ app_log_lvl ]
         logging.basicConfig( level=log_lvl )
@@ -296,7 +376,7 @@ if __name__ == '__main__':
 
     app = QtWidgets.QApplication( sys.argv )
 
-    window = MainWindow()
+    window = MainWindow( args.host)
                                                
     window.show()
-    app.exec()
+    app.exec_()
