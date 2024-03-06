@@ -142,11 +142,6 @@ class LoginWidget( QtWidgets.QWidget ):
         ##print(2, scicat_host )
         #url_root = urllib.parse.urljoin( scicat_host, 'api/v3' )
         url_root='badurl'
-
-
-        #print('XXXXXXXXXXX')
-        #print(url_root )
-
         res = self._cbk_login( user, pw )
 
         if ERR_NONE == res:
@@ -225,8 +220,6 @@ class MainWindow(QtWidgets.QMainWindow):
             url_root = url_root + '/'
 
         url = url_root + 'api/v3' 
- 
-        print('XXX', url)
         res = self.host_services.login( url,  username, password )
 
         return res
@@ -245,7 +238,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.host_services.load_plugins()
         
         for name, plugin in self.host_services.plugins.items():
-
             plugin.initialise()
 
             plugin.start()
@@ -278,17 +270,12 @@ class MainWindow(QtWidgets.QMainWindow):
         qtlayout.addWidget( login_widget )
 
         host_services = self.host_services
-
-        #host servoices starts the plugins.
-        #Now see which plugins have a UI.
         try:
 
             for name, plugin in host_services.plugins.items():
 
                 try:
                     widget = plugin.widget()
-                    print('XXX', widget )
-
                     qtwidget = bindings.createWidget( widget )
 
                     qtlayout.addWidget( qtwidget )
@@ -302,11 +289,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         l0.addWidget( label )
 
                         pg = plugin.property_group()
-                        print('XXXX', pg )
-
                         l =  services._property_group_2_layout( pg )
-
-                        print('BOO')
                         l0.addLayout( l )
 
 

@@ -58,8 +58,3 @@ if __name__ == '__main__':
 
     for name, plugin in host_services.plugins.items():
         plugin.join()
-
-
-
-
-

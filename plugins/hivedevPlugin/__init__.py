@@ -19,10 +19,8 @@ import threading
 import queue
 import pathlib
 
-#import watchdog.observers
-#import watchdog.events
-#from scitacean.testing.docs import setup_fake_client
-#from scitacean import Client, Dataset
+import watchdog.observers
+import watchdog.events
 
 class WorkerBase( threading.Thread):
     '''WorkerBase class serves as a base for other classes and provides a method stop() that notifies any threads waiting on a condition (cond_stop)'''
@@ -61,7 +59,28 @@ class RetryWorker( WorkerBase ):
                 except Exception as e:
                     print(e)
 
+class MyHandler( watchdog.events.FileSystemEventHandler ):
+    '''MyHandler class is designed to handle file system events and specifically watches for the creation of files.'''
+    '''When a new bagit.txt file is created and the specified conditions are met, it emits a signal with the file's path.'''
+    '''Watch for creation of bagit files using FileSystemEvents'''
 
+    signal = core.Signal()
+    def __init__(self, *args, **kwargs ):
+        super().__init__( *args, **kwargs )
+        self.last_created = None
+        self.last_time = datetime.datetime.min
+
+    def on_any_event(self, evt):
+        path = pathlib.Path(evt.src_path)
+        dt = datetime.timedelta(milliseconds=500)
+
+        if evt.event_type == 'created':
+                if fnmatch.fnmatch(path.name, '*.md'):
+                    if path != self.last_created and datetime.datetime.now() - self.last_time > dt:
+                        self.last_created = path
+                        self.last_time = datetime.datetime.now()
+
+                        self.signal.emit( evt.src_path )
 
 class Producer( WorkerBase ):
     '''Producer class sets up file system monitoring using RetryWorker and MyHandler, creating workers, observing file system events,'''
@@ -85,26 +104,25 @@ class Producer( WorkerBase ):
         retry_worker.daemon = True
         retry_worker.start()
 
-        #evt_handler = MyHandler()
+        evt_handler = MyHandler()
         
         #when evt_handler emits a signal, onNewBagit method will be called.
-        #evt_handler.signal.connect( self.onNewBagit )
+        evt_handler.signal.connect( self.onNewFiles )
 
-        #observer = watchdog.observers.Observer()
+        observer = watchdog.observers.Observer()
 
         #Configures the observer to watch the path directory recursively for events and associates it with evt_handler.
-        #observer.schedule( evt_handler, path, recursive=True )
-
-        #observer.start()
+        observer.schedule( evt_handler, path, recursive=True )
+        observer.start()
 
         while not self.evt_stop.wait(timeout=1):
             pass
 
-        #observer.stop()
-        retry_worker.stop() 
+        observer.stop()
+        retry_worker.stop()
         retry_worker.join()
 
-    def onNewBagit(self, path):
+    def onNewFiles(self, path):
         self.q.put( path )
 
 class Consumer( WorkerBase ):
@@ -144,14 +162,12 @@ class HivePlugin( ingestorservices.plugin.PluginBase ):
         self.path_spool  = pathlib.Path('./data/hive')
         self.q = queue.Queue()
         self.producer = Producer(self.q)
-        self.consumer = Consumer( self.q )
-        self.consumer.sigDataAvailable.connect( self.onDataAvailable )
+        self.consumer = Consumer(self.q)
+        self.consumer.sigDataAvailable.connect(self.onDataAvailable)
 
         for t in [self.consumer, self.producer]:
             #t.daemon = True
             t.start()
-
-        print('HIVE1')
 
         def requireProperty( name, value ):
 
@@ -181,11 +197,7 @@ class HivePlugin( ingestorservices.plugin.PluginBase ):
         prop_sourceFolder = requireProperty( 'Data source', '' )
         prop_creationDate = requireProperty( 'Date', '' )
         prop_location = requireProperty( 'Location', '' )
-
-        print('HIVE2')
         prop_experimentData = boxProperty( 'Experiment data', '' )
-
-        print('HIVE4')
 
         w = widgets.Widget.create()
         self.w = w
@@ -211,16 +223,10 @@ class HivePlugin( ingestorservices.plugin.PluginBase ):
 
         w.setLayout( vbox )
 
-        print('HIVE6')
-
     def run(self):
-        print('RUNNNING')
         for t in [self.consumer, self.producer]:
             #t.daemon = True
             t.join()
-
-
-
 
     def stop(self):
         self.producer.stop()
@@ -274,19 +280,7 @@ class HivePlugin( ingestorservices.plugin.PluginBase ):
             propExperimentData.value = combined_json_string
 
     def onSubmitRequest(self):
-        dataSet = Dataset(
-            owner=self.properties['Owner'].value,
-            owner_group=self.properties['Owner group'].value,
-            principal_investigator=self.properties['Principal Investigator'].value,
-            contact_email=self.properties['Contact email'].value,
-            source_folder=self.properties['Data source'].value,
-            creation_time=self.properties['Date'].value,
-            creation_location=self.properties['Location'].value,
-            meta=json.loads(self.properties['Experiment data'].value),
-            type="raw"
-        )
-
-        print(dataSet)
+        print("Submitting dataset to backend")
 
 class Factory:
 

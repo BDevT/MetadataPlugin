@@ -2,10 +2,9 @@ import datetime
 import fnmatch
 import json
 import logging
-from pyscicat.client import encode_thumbnail, ScicatClient
-from scitacean.testing.docs import setup_fake_client
-from scitacean import Dataset
+
 from plugins.pegasusdevPlugin.extract import extractPegasus
+
 logger = logging.getLogger( __name__ )
 
 import ingestorservices as services
@@ -111,8 +110,8 @@ class Producer( WorkerBase ):
 
         evt_handler = MyHandler()
         
-        #when evt_handler emits a signal, onNewBagit method will be called.
-        evt_handler.signal.connect( self.onNewBagit )
+        #when evt_handler emits a signal, onNewFiles method will be called.
+        evt_handler.signal.connect( self.onNewFiles )
 
         observer = watchdog.observers.Observer()
 
@@ -129,7 +128,7 @@ class Producer( WorkerBase ):
         retry_worker.stop() 
         retry_worker.join()
 
-    def onNewBagit(self, path):
+    def onNewFiles(self, path):
         self.q.put( path )
 
 class Consumer( WorkerBase ):
@@ -281,38 +280,7 @@ class PegasusPlugin( ingestorservices.plugin.PluginBase ):
             propExperimentData.value = jsonFileRaw
 
     def onSubmitRequest(self):
-        # dataset = metadata.Dataset(
-        #     owner=self.properties['Owner'].value,
-        #     ownerGroup=self.properties['Owner group'].value,
-        #     investigator=self.properties['Investigator'].value,
-        #     contactEmail=self.properties['Contact email'].value,
-        #     sourceFolder=self.properties['Data source'].value,
-        #     inputDataset=[self.properties['Experimental source'].value],
-        #     usedSoftware=[self.properties['Software'].value],
-        #     creationTime=self.properties['Date'].value,
-        #     type="derived")
-        
-        # print('Submitting dataset:', dataset.__dict__)
-        # scicat = ScicatClient(base_url="http://localhost/api/v3",
-        #                 username="admin",
-        #                 password="2jf70TPNZsS")
-        # dataset_id = scicat.upload_new_dataset(dataset)
-        # print('Dataset submitted:', dataset_id)
-        client = setup_fake_client()
-        dset = Dataset(
-            owner=self.properties['Owner'].value,
-            owner_group=self.properties['Owner group'].value,
-            investigator=self.properties['Investigator'].value,
-            contact_email=self.properties['Contact email'].value,
-            source_folder=self.properties['Data source'].value,
-            input_datasets=[self.properties['Experimental source'].value],
-            used_software=[self.properties['Software'].value],
-            creation_time=self.properties['Date'].value,
-            meta=json.loads(self.properties['Simulation data'].value),
-            type="derived")
-        
-        dataset_id = client.upload_new_dataset_now(dset)
-        print('Dataset submitted:', dataset_id)
+        print("Submitting dataset to backend")
 
 class Factory:
 
@@ -328,4 +296,4 @@ def register_plugin_factory( host_services ):
 
     factory = Factory()
 
-    #host_services.register_plugin_factory( 'metadata_plugin', 'PegasusPlugin',  factory )
+    host_services.register_plugin_factory( 'metadata_plugin', 'PegasusPlugin',  factory )
