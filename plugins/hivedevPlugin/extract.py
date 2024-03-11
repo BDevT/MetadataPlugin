@@ -1,10 +1,29 @@
+"""
+This module defines a function to convert Markdown content to a JSON string.
+
+Function:
+    convert_md_to_json(markdown_text): Converts the provided Markdown text into a formatted JSON string.
+
+Args:
+    markdown_text (str): The Markdown content to be converted.
+
+Returns:
+    str: The formatted JSON string representation of the Markdown content.
+"""
 import json
 import re
 
 # Function to convert Markdown content to JSON
 def convert_md_to_json(markdown_text):
+    """
+    Converts the provided Markdown text into a formatted JSON string.
 
-    # Split the Markdown content into sections based on headings
+    Args:
+        markdown_text (str): The Markdown text to be converted.
+
+    Returns:
+        str: The formatted JSON string representing the converted Markdown content.
+    """
     sections = re.split(r'#+\s+', markdown_text)
     # Initialize the JSON structure
     json_data = {}

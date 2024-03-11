@@ -1,3 +1,12 @@
+"""
+This module provides functionality for running plugins.
+
+Classes:
+    - keyvalue: An argparse action to handle key-value pairs as command-line arguments.
+
+Functions:
+    - main(): The main entry point for running the plugin.
+"""
 import  argparse
 import pkgutil
 #import time
@@ -8,6 +17,9 @@ import ingestorservices
 
 # create a keyvalue class 
 class keyvalue(argparse.Action): 
+    """
+    An argparse action to handle key-value pairs as command-line arguments.
+    """
     # Constructor calling 
     def __call__( self , parser, namespace, 
                  values, option_string = None): 
@@ -21,6 +33,9 @@ class keyvalue(argparse.Action):
 
 
 if __name__ == '__main__':
+    """
+    The main entry point for running the plugin.
+    """
     parser = argparse.ArgumentParser(
                             prog='PluginRunner',
                             description='Runs a pluigin')
@@ -58,8 +73,3 @@ if __name__ == '__main__':
 
     for name, plugin in host_services.plugins.items():
         plugin.join()
-
-
-
-
-
