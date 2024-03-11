@@ -159,7 +159,7 @@ class MyHandler( watchdog.events.FileSystemEventHandler ):
 
 class Producer( WorkerBase ):
     """
-    Worker thread that monitors a queue for new Markdown file paths and passes them to the consumer.
+    Worker thread that monitors a queue for new text file paths and passes them to the consumer.
     
     Producer class for file system monitoring and trigger event generation.
     """
@@ -222,13 +222,13 @@ class Producer( WorkerBase ):
         Emits a signal when a new text (file) is available.
 
         Args:
-            path (pathlib.Path): The path to the new Hive data.
+            path (pathlib.Path): The path to the new text file data.
         """
         self.q.put( path )
 
 class Consumer( WorkerBase ):
     """
-    Worker thread that receives Markdown file paths from the producer and processes them.
+    Worker thread that receives text file paths from the producer and processes them.
 
     Consumer class is designed to continuously run in a thread, checking the input queue for data. 
     When data is available in the queue, it emits a signaln (sigDataAvailable) with the retrieved data 
@@ -239,7 +239,7 @@ class Consumer( WorkerBase ):
         Initializes the Consumer.
 
         Args:
-            q_in (queue.Queue): The queue to receive Markdown file paths from.
+            q_in (queue.Queue): The queue to receive text file paths from.
         """
         super().__init__()
         self.q_in = q_in
@@ -271,9 +271,17 @@ class Consumer( WorkerBase ):
 
 
 class PegasusPlugin( ingestorservices.plugin.PluginBase ):
-    '''Wait for events. Extract metadata from placeholder and file before writing to backend '''
-
+    """
+    Waits for events, extracts metadata from text files, and writes the metadata to a backend.
+    """
     def __init__(self, host_services):
+        """
+        Initializes the PegasusPlugin.
+
+        Args:
+            host_services (ingestorservices.host.HostServices): The host services object providing access
+                to framework functionalities.
+        """
         super().__init__(host_services)
         self.path_spool  = pathlib.Path('./data/pegasus')
         self.q = queue.Queue()
@@ -286,7 +294,17 @@ class PegasusPlugin( ingestorservices.plugin.PluginBase ):
             t.start()
 
         def requireProperty( name, value ):
+            """
+            Attempts to get a property from the plugin's properties. If the property doesn't exist,
+            creates a new one with the provided name and value.
 
+            Args:
+                name (str): The name of the property.
+                value (str): The initial value of the property.
+
+            Returns:
+                services.properties.Property: The retrieved or created property.
+            """
             try:
                 prop = self.properties( name )
             except Exception as e:
@@ -298,6 +316,15 @@ class PegasusPlugin( ingestorservices.plugin.PluginBase ):
             return prop
 
         def boxProperty( name, value ):
+            """
+            Ensure a property exists or create a new one.
+            Args:
+                name (str): The name of the property.
+                value (str): The initial value of the property.
+
+            Returns:
+                services.properties.Property: The created property.
+            """
             try:
                 prop = self.properties( name )
             except Exception as e:
@@ -305,7 +332,7 @@ class PegasusPlugin( ingestorservices.plugin.PluginBase ):
                 self.properties[ prop.name ] = prop
 
             return prop
-
+        # Define properties for user input and extracted metadata
         prop_owner = requireProperty( 'Owner', '' )
         prop_ownerGroup = requireProperty( 'Owner group', '' )
         prop_investigator = requireProperty( 'Investigator', '' )
@@ -321,6 +348,7 @@ class PegasusPlugin( ingestorservices.plugin.PluginBase ):
 
         vbox = widgets.VBoxLayout()
 
+        # Create a property group to display and manage properties
         pg = services.properties.PropertyGroup( layout=services.properties.PropertyGroup.VERTICAL )
         pg.add( prop_owner )
         pg.add( prop_ownerGroup )
@@ -341,19 +369,32 @@ class PegasusPlugin( ingestorservices.plugin.PluginBase ):
 
         w.setLayout( vbox )
 
-
     def finish(self):
+        """
+        Stops the plugin.
+        """
         self.producer.stop()
         self.consumer.stop()
 
         self.producer.join()
         self.consumer.join()
 
-
     def widget(self):
+        """
+        Returns the plugin's widget.
+
+        Returns:
+            The plugin's widget.
+        """
         return self.w
 
     def onDataAvailable( self, *args ):
+        """
+        Handles available data.
+
+        Args:
+            args: Variable length argument list.
+        """
         filePath = pathlib.Path( args[0] )
 
         if filePath.exists():
@@ -389,12 +430,26 @@ class PegasusPlugin( ingestorservices.plugin.PluginBase ):
             propExperimentData.value = jsonFileRaw
 
     def onSubmitRequest(self):
+        """
+        Handles submit request.
+        """
+        print("Submitting dataset to backend")
         print("Submitting dataset to backend")
 
 class Factory:
-
+    """
+    Factory class that creates instances of the PegasusPlugin.
+    """
     def __call__(self, host_services):
+        """
+        Creates and returns an instance of the PegasusPlugin.
 
+        Args:
+            host_services (IngestorServices): The host IngestorServices instance.
+
+        Returns:
+            PegasusPlugin: An instance of the PegasusPlugin class.
+        """
         plugin = PegasusPlugin(host_services)
 
         return plugin
@@ -402,7 +457,16 @@ class Factory:
 
 @log_decorator
 def register_plugin_factory( host_services ):
+    """
+    Registers the PegasusPlugin factory with the host services.
 
+    This function creates a `Factory` instance, which provides the `PegasusPlugin` class,
+    and registers it with the host services using the `register_plugin_factory` method.
+    The plugin is registered as a 'metadata_plugin' of type 'PegasusPlugin'.
+
+    Args:
+        host_services (object): An object representing the host services framework.
+    """
     factory = Factory()
 
     host_services.register_plugin_factory( 'metadata_plugin', 'PegasusPlugin',  factory )
