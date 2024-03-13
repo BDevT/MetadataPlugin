@@ -1,11 +1,41 @@
+"""
+This module provides functions to extract information from a Pegasus output file.
+
+The `extractPegasus` function parses the provided file and returns a JSON string containing the extracted data.
+"""
 import json
 import re
 
 def extract_match(pattern, line, cast_type=str, default=None):
+    """
+    Extracts a match from a regular expression pattern in a given line.
+
+    Args:
+        pattern (str): The regular expression pattern to search for.
+        line (str): The line of text to search in.
+        cast_type (type, optional): The type to cast the extracted value to. Defaults to str.
+        default (object, optional): The value to return if no match is found. Defaults to None.
+
+    Returns:
+        object: The extracted value (cast to the specified type) if a match is found, otherwise the default value.
+    """
     match = re.search(pattern, line)
     return cast_type(match.group(1)) if match else default
 
 def extractPegasus(file_path):
+    """
+    Extracts information from a Pegasus output file and returns it as a JSON string.
+
+    This function parses the given file, looking for specific keywords and patterns to extract data about
+    solution options, statistics, and hardware/software information. The extracted data is then formatted as a JSON object
+    and returned.
+
+    Args:
+        file_path (str): The path to the Pegasus output file.
+
+    Returns:
+        str: A JSON string containing the extracted data.
+    """
     data = {
         "Solution Options": [],
         "Stats": []

@@ -1,3 +1,24 @@
+"""
+This module defines the PegasusPlugin class, which inherits from the `ingestorservices.plugin.PluginBase` class.
+
+The PegasusPlugin ingests data from text files and populates metadata fields based on the content.
+
+This module implements a plugin for extracting metadata from tex files and submitting it to a backend system.
+
+Classes:
+
+- WorkerBase: A base class for worker threads that provides a stop() method.
+- RetryWorker: A worker that periodically checks for text files in a spool path and puts their paths into a queue.
+- MyHandler: This class handles file system events, specifically watching for creation of text files with the desired extension and emitting a signal with the file path under specific conditions.
+- Producer: A producer thread that uses a RetryWorker to generate trigger events.
+- Consumer: A consumer thread that receives event paths from a queue and emits a signal with the retrieved data.
+- PegasusPlugin: A plugin that extracts metadata from text files and writes it to a backend.
+- Factory: A factory that creates instances of the PegasusPlugin.
+
+Functions:
+
+- register_plugin_factory(host_services): Registers the PegasusPlugin factory with the host services.
+"""
 import datetime
 import fnmatch
 import json
@@ -23,25 +44,42 @@ import watchdog.observers
 import watchdog.events
 
 class WorkerBase( threading.Thread):
-    '''WorkerBase class serves as a base for other classes and provides a method stop() that notifies any threads waiting on a condition (cond_stop)'''
-    '''that a change has occurred, potentially used to indicate that the thread should stop its execution.'''
+    """
+    Base class for worker threads used in the PegasusPlugin.
+
+    This class extends threading.Thread to provide a common interface for worker threads.
+    
+    Provides a method `stop()` that notifies any threads waiting on a condition (`cond_stop`) 
+    that a change has occurred, potentially used to indicate that the thread should stop its execution.
+    """
     def __init__(self):
+        """
+        Initializes the base worker thread.
+        """
         super().__init__()
         self.cond_stop = threading.Condition()
 
     def stop(self):
-        
+        """
+        Sets the stop event for the worker thread, signaling it to stop.
+        """
         with self.cond_stop:
             self.cond_stop.notify()
 
-
 class RetryWorker( WorkerBase ):
-    '''RetryWorker class periodically checks for bagit files in a specified directory (root) and puts their paths into a queue (q_out)'''
-    '''for further processing, all while waiting for a signal to stop its execution.'''
-    '''Periodically check for bagit files in spool path'''
+    """
+    Worker thread that monitors a directory for new data files and puts them into a queue.
 
+    It puts their paths into a specified queue (q_out) for further processing, all while waiting for a signal to stop its execution.
+    """
     def __init__(self, path, q_out):
+        """
+        Initializes the RetryWorker.
 
+        Args:
+            path (pathlib.Path): The path to the directory to monitor.
+            q_out (queue.Queue): The queue to put discovered data file paths into.
+        """ 
         super().__init__()
 
         self.root = path
@@ -49,11 +87,17 @@ class RetryWorker( WorkerBase ):
 
 
     def run(self):
+        """
+        Main loop of the RetryWorker.
+
+        Continuously checks the monitored directory for new data files and puts them
+        into the output queue. Stops when the stop event is set.
+        """
         with self.cond_stop:
             while not self.cond_stop.wait(timeout=1):
 
                 try:
-                   # get the path of the markdown file here - Ajay
+                   # get the path of the text file here
                    paths = self.root.glob( './*/*.out')
                    for path in sorted(paths):
                        self.q_out.put( path )
@@ -61,19 +105,46 @@ class RetryWorker( WorkerBase ):
                 except Exception as e:
                     print(e)
 
+"""
+The MyHandler class inherited from watchdog.events.FileSystemEventHandler.
 
+It monitors a directory for file creation events and emits a signal 
+when a specific type of file is created after a debounced delay.
+"""
 class MyHandler( watchdog.events.FileSystemEventHandler ):
-    '''MyHandler class is designed to handle file system events and specifically watches for the creation of files.'''
-    '''When a new bagit.txt file is created and the specified conditions are met, it emits a signal with the file's path.'''
-    '''Watch for creation of bagit files using FileSystemEvents'''
+    """
+    Custom file system event handler that reacts to file creation events with a debounced signal.
 
+    Inherits from watchdog.events.FileSystemEventHandler and provides customized behavior for specific events.
+
+    Attributes:
+        signal (core.Signal): A signal object used to emit events when a relevant file is created.
+        last_created (pathlib.Path, optional): The path to the last created file that met the criteria. Defaults to None.
+        last_time (datetime.datetime): The timestamp of the last file creation event that met the criteria. Defaults to datetime.datetime.min.
+    """
     signal = core.Signal()
     def __init__(self, *args, **kwargs ):
+        """
+        Initializes the MyHandler object.
+
+        Args:
+            *args: Arguments passed to the parent class (FileSystemEventHandler) constructor.
+            **kwargs: Keyword arguments passed to the parent class (FileSystemEventHandler) constructor.
+        """
         super().__init__( *args, **kwargs )
         self.last_created = None
         self.last_time = datetime.datetime.min
 
     def on_any_event(self, evt):
+        """
+        Handles any file system event received by the handler.
+
+        Checks if the event is a 'created' event for a file ending in '.out' and implements debouncing logic.
+        If the conditions are met, emits a signal with the source path of the created file.
+
+        Args:
+            evt (watchdog.events.FileSystemEvent): The file system event object.
+        """
         path = pathlib.Path(evt.src_path)
         dt = datetime.timedelta(milliseconds=500)
 
@@ -87,11 +158,23 @@ class MyHandler( watchdog.events.FileSystemEventHandler ):
 
 
 class Producer( WorkerBase ):
+    """
+    Worker thread that monitors a queue for new text file paths and passes them to the consumer.
+    
+    Producer class for file system monitoring and trigger event generation.
+    """
     '''Producer class sets up file system monitoring using RetryWorker and MyHandler, creating workers, observing file system events,'''
     '''and managing threads to generate trigger events based on detected changes.'''
     ''' Generate trigger events using the RetryWorker and the MyHandler '''
 
     def __init__(self, q, path_spool = './data'):
+        """
+        Initializes the Producer.
+
+        Args:
+            q (queue.Queue): The queue to receive file paths from.
+            path_spool (str, optional): The directory to create the "pegasus" subdirectory in. Defaults to "./data".
+        """
         super().__init__()
 
         self.signal = core.Signal()
@@ -100,7 +183,13 @@ class Producer( WorkerBase ):
         self.path_spool = pathlib.Path( path_spool )
 
     def run(self):
+        """
+        Main loop of the Producer.
 
+        Creates a "pegasus" subdirectory in the specified path spool and starts a RetryWorker
+        to monitor that directory. Continuously checks the input queue for new paths and
+        signals the consumer when a new path is available. Stops when the stop event is set.
+        """
         path =  self.path_spool / 'pegasus' 
         path.mkdir( parents=True, exist_ok=True)
 
@@ -129,16 +218,29 @@ class Producer( WorkerBase ):
         retry_worker.join()
 
     def onNewFiles(self, path):
+        """
+        Emits a signal when a new text (file) is available.
+
+        Args:
+            path (pathlib.Path): The path to the new text file data.
+        """
         self.q.put( path )
 
 class Consumer( WorkerBase ):
-    '''Consumer class is designed to continuously run in a thread, checking the input queue for data. When data is available in the queue, it emits a signal'''
-    '''(sigDataAvailable) with the retrieved data and proceeds with further tasks if any, continually checking the queue for more data to process.'''
-    
-    '''Recieve event paths '''
+    """
+    Worker thread that receives text file paths from the producer and processes them.
 
+    Consumer class is designed to continuously run in a thread, checking the input queue for data. 
+    When data is available in the queue, it emits a signaln (sigDataAvailable) with the retrieved data 
+    and proceeds with further tasks if any, continually checking the queue for more data to process.
+    """
     def __init__(self, q_in ):
+        """
+        Initializes the Consumer.
 
+        Args:
+            q_in (queue.Queue): The queue to receive text file paths from.
+        """
         super().__init__()
         self.q_in = q_in
         self.count = 0
@@ -146,6 +248,13 @@ class Consumer( WorkerBase ):
         self.sigDataAvailable = core.Signal()
 
     def run(self):
+        """
+        Main loop of the Consumer.
+
+        Continuously checks the input queue for new paths. When a path is available,
+        it retrieves it, emits a signal with the path, and marks the task as done in the queue.
+        Stops when the stop event is set.
+        """
         with self.cond_stop:
             while not self.cond_stop.wait(timeout=1):
                                      
@@ -162,9 +271,17 @@ class Consumer( WorkerBase ):
 
 
 class PegasusPlugin( ingestorservices.plugin.PluginBase ):
-    '''Wait for events. Extract metadata from placeholder and file before writing to backend '''
-
+    """
+    Waits for events, extracts metadata from text files, and writes the metadata to a backend.
+    """
     def __init__(self, host_services):
+        """
+        Initializes the PegasusPlugin.
+
+        Args:
+            host_services (ingestorservices.host.HostServices): The host services object providing access
+                to framework functionalities.
+        """
         super().__init__(host_services)
         self.path_spool  = pathlib.Path('./data/pegasus')
         self.q = queue.Queue()
@@ -177,7 +294,17 @@ class PegasusPlugin( ingestorservices.plugin.PluginBase ):
             t.start()
 
         def requireProperty( name, value ):
+            """
+            Attempts to get a property from the plugin's properties. If the property doesn't exist,
+            creates a new one with the provided name and value.
 
+            Args:
+                name (str): The name of the property.
+                value (str): The initial value of the property.
+
+            Returns:
+                services.properties.Property: The retrieved or created property.
+            """
             try:
                 prop = self.properties( name )
             except Exception as e:
@@ -189,6 +316,15 @@ class PegasusPlugin( ingestorservices.plugin.PluginBase ):
             return prop
 
         def boxProperty( name, value ):
+            """
+            Ensure a property exists or create a new one.
+            Args:
+                name (str): The name of the property.
+                value (str): The initial value of the property.
+
+            Returns:
+                services.properties.Property: The created property.
+            """
             try:
                 prop = self.properties( name )
             except Exception as e:
@@ -196,7 +332,7 @@ class PegasusPlugin( ingestorservices.plugin.PluginBase ):
                 self.properties[ prop.name ] = prop
 
             return prop
-
+        # Define properties for user input and extracted metadata
         prop_owner = requireProperty( 'Owner', '' )
         prop_ownerGroup = requireProperty( 'Owner group', '' )
         prop_investigator = requireProperty( 'Investigator', '' )
@@ -212,6 +348,7 @@ class PegasusPlugin( ingestorservices.plugin.PluginBase ):
 
         vbox = widgets.VBoxLayout()
 
+        # Create a property group to display and manage properties
         pg = services.properties.PropertyGroup( layout=services.properties.PropertyGroup.VERTICAL )
         pg.add( prop_owner )
         pg.add( prop_ownerGroup )
@@ -232,19 +369,32 @@ class PegasusPlugin( ingestorservices.plugin.PluginBase ):
 
         w.setLayout( vbox )
 
-
     def finish(self):
+        """
+        Stops the plugin.
+        """
         self.producer.stop()
         self.consumer.stop()
 
         self.producer.join()
         self.consumer.join()
 
-
     def widget(self):
+        """
+        Returns the plugin's widget.
+
+        Returns:
+            The plugin's widget.
+        """
         return self.w
 
     def onDataAvailable( self, *args ):
+        """
+        Handles available data.
+
+        Args:
+            args: Variable length argument list.
+        """
         filePath = pathlib.Path( args[0] )
 
         if filePath.exists():
@@ -280,12 +430,26 @@ class PegasusPlugin( ingestorservices.plugin.PluginBase ):
             propExperimentData.value = jsonFileRaw
 
     def onSubmitRequest(self):
+        """
+        Handles submit request.
+        """
+        print("Submitting dataset to backend")
         print("Submitting dataset to backend")
 
 class Factory:
-
+    """
+    Factory class that creates instances of the PegasusPlugin.
+    """
     def __call__(self, host_services):
+        """
+        Creates and returns an instance of the PegasusPlugin.
 
+        Args:
+            host_services (IngestorServices): The host IngestorServices instance.
+
+        Returns:
+            PegasusPlugin: An instance of the PegasusPlugin class.
+        """
         plugin = PegasusPlugin(host_services)
 
         return plugin
@@ -293,7 +457,16 @@ class Factory:
 
 @log_decorator
 def register_plugin_factory( host_services ):
+    """
+    Registers the PegasusPlugin factory with the host services.
 
+    This function creates a `Factory` instance, which provides the `PegasusPlugin` class,
+    and registers it with the host services using the `register_plugin_factory` method.
+    The plugin is registered as a 'metadata_plugin' of type 'PegasusPlugin'.
+
+    Args:
+        host_services (object): An object representing the host services framework.
+    """
     factory = Factory()
 
     host_services.register_plugin_factory( 'metadata_plugin', 'PegasusPlugin',  factory )

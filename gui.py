@@ -1,3 +1,15 @@
+"""
+This module provides functionality for creating a GUI application for managing metadata plugins.
+
+Classes:
+    - LoginWidget: A widget for logging in and out of the application.
+    - TextConsole: A widget for displaying console-like text output.
+    - MainWindow: The main window of the application.
+
+Functions:
+    - getProxyModel: Returns a proxy model for a given model.
+    - myprint: A function for printing output.
+"""
 import PySide2.QtCore as QtCore
 #import PySide2.QtGui as QtGui
 import PySide2.QtWidgets as QtWidgets
@@ -28,6 +40,11 @@ log_decorator = core.create_logger_decorator( logger )
 import linecache
 
 def PrintException():
+    """
+    Prints and logs an exception with its traceback information.
+
+    Used for informative error handling during program execution.
+    """
     exc_type, exc_obj, tb = sys.exc_info()
     f = tb.tb_frame
     lineno = tb.tb_lineno
@@ -41,9 +58,19 @@ def PrintException():
 ERR_NONE = 0
 
 class LoginWidget( QtWidgets.QWidget ):
+    """
+    Login widget class for user authentication.
 
+    Provides UI elements for entering username and password, and emits signals for login and logout actions.
+    """
     def __init__(self, f_login, f_logout):
+        """
+        Constructor for the LoginWidget class.
 
+        Args:
+            f_login (callable): Callback function to handle login action.
+            f_logout (callable): Callback function to handle logout action.
+        """
         super().__init__()
 
         self._cbk_login = f_login
@@ -53,7 +80,11 @@ class LoginWidget( QtWidgets.QWidget ):
 
     @log_decorator
     def setupUI(self):
+        """
+        Sets up the user interface for the login widget.
 
+        Creates and arranges UI elements like labels, input fields, and buttons.
+        """
         self.user_edit = QtWidgets.QLineEdit()
         #self.user_label = QLabel('User')
         #self.user_label.setBuddy( self.user_edit )
@@ -98,16 +129,37 @@ class LoginWidget( QtWidgets.QWidget ):
 
     @log_decorator
     def slotOnUserKeyPress(self, *args):
+        """
+        Enables the login button when the user enters a username.
+
+        Args:
+            user (str): The username entered in the QLineEdit.
+        """
         user = args[0]
         
         self.btn_login.setEnabled( len(user) )
 
     @log_decorator
     def slotOnPwKeyPress(self, *args):
+        """
+        Logs information about slotOnPwKeyPress being called with the provided arguments.
+
+        Args:
+            args (tuple): Arguments passed to the slot.
+        """
         logging.info( 'slotOnPwKeyPress : %s' % args )
 
     @log_decorator
     def slotOnBtnLogin(self, *args):
+        """
+        Attempts to log in the user using the provided callback function.
+
+        If successful, enables the logout button and disables the login button. Disables both input fields.
+        Otherwise, the behavior is not specified in the current code.
+
+        Args:
+            args (tuple): Arguments passed to the slot (usually empty).
+        """
         print(args)
         
         user = self.user_edit.text()
@@ -153,7 +205,15 @@ class LoginWidget( QtWidgets.QWidget ):
 
     @log_decorator
     def slotOnBtnLogout(self, *args):
+        """
+        Attempts to log out the user using the provided callback function.
 
+        If successful, enables the login button and disables the logout button. Enables both input fields.
+        Otherwise, the behavior is not specified in the current code.
+
+        Args:
+            args (tuple): Arguments passed to the slot (usually empty).
+        """
         res = self._cbk_logout()
 
         self.btn_logout.setEnabled( False )
@@ -165,7 +225,17 @@ class LoginWidget( QtWidgets.QWidget ):
 
 
 def getProxyModel( node ):
+    """
+    Creates and returns a proxy model for a given model.
 
+    The created proxy model acts as an intermediary layer for filtering and sorting data from the original model.
+
+    Args:
+        node: The model node for which to create the proxy model.
+
+    Returns:
+        QtCore.QSortFilterProxyModel: The configured proxy model.
+    """
     model = QJsonModel( node )
 
     # proxy model
@@ -180,11 +250,44 @@ def getProxyModel( node ):
     return proxyModel
 
 def myprint( *args, **kwargs ):
+    """
+    Prints the provided arguments with formatting options.
+
+    This function takes any number of positional and keyword arguments, and prints
+    them using the `print` function along with specified keyword arguments.
+
+    Args:
+        *args (tuple): A tuple of positional arguments to be printed.
+        **kwargs (dict): Keyword arguments used for formatting the output.
+            See the documentation of the `print` function for supported keywords.
+
+    Returns:
+        None
+    """
     print( *args )
 
 
 class TextConsole( QtWidgets.QPlainTextEdit ):
+    """
+    **TextConsole class**
+
+    This class provides a widget that displays text in a console-like format. It inherits from the `QPlainTextEdit` class of PySide2 and offers read-only functionality with a limited number of displayed lines.
+
+    **Attributes:**
+
+    * `max_lines` (int): The maximum number of lines to display in the text console.
+
+    **Methods:**
+
+    * `__init__(self)`: Initializes the `TextConsole` object.
+    * `append(self, s)`: Appends a string `s` to the text console.
+    """
     def __init__(self):
+        """
+        Initializes the `TextConsole` object.
+
+        Sets the text console to read-only and establishes a maximum number of lines for display.
+        """
         super().__init__()
         self.setReadOnly( True )
         self.max_lines = 100
@@ -192,13 +295,29 @@ class TextConsole( QtWidgets.QPlainTextEdit ):
         self.setMaximumBlockCount( self.max_lines )
 
     def append( self, s ):
+        """
+        Appends a string `s` to the text console.
 
+        This method adds the provided string to the end of the displayed text, maintaining the maximum line limit.
+        """
         self.appendPlainText( s )
 
 # Subclass QMainWindow to customize your application's main window
 class MainWindow(QtWidgets.QMainWindow):
+    """
+    The main window of the application, responsible for user interface elements
+    and managing the interaction with IngestorServices framework.
 
+    This class initializes the login widget, sets up the main UI layout, and
+    handles communication with plugins and the SciCat server.
+    """
     class QtBridge( QtCore.QObject ):
+        """
+        Internal class to bridge signals between the HostServices bridge
+        and the main window for logging purposes.
+
+        Emits a `signalLog` signal whenever a log message is received.
+        """
         signalLog = QtCore.Signal(str)
 
         def __init__(self):
@@ -206,15 +325,28 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @log_decorator
     def logoutSciCat(self):
+        """Logs out of the SciCat server using the `HostServices` instance."""
         self.host_services.logout()
 
     @log_decorator
     def loginSciCat(self, username, password ):
+        """
+        Logs in to the SciCat server using the `HostServices` instance.
+
+        Constructs the full URL using the provided server address and
+        performs the login operation.
+
+        Args:
+            username (str): Username for login.
+            password (str): Password for login.
+
+        Returns:
+            int: Result code from the login operation (0 for success).
+        """
         #res = self.host_services.login(base_url,  username, password )
         scicat_host = self.scicat_server 
 
         url_root = self.scicat_server 
-
 
         if not url_root.endswith('/' ):
             url_root = url_root + '/'
@@ -223,9 +355,17 @@ class MainWindow(QtWidgets.QMainWindow):
         res = self.host_services.login( url,  username, password )
 
         return res
-        
 
     def __init__(self, server='localhost'):
+        """
+        Constructor for the `MainWindow` class.
+
+        Initializes essential attributes like `scicat_server`, `host_services`,
+        and `qtbridge`, and starts/initializes all loaded plugins.
+
+        Args:
+            server (str, optional): SciCat server address (default: 'localhost').
+        """
         super().__init__()
 
         self.scicat_server = server
@@ -242,16 +382,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
             plugin.start()
 
-
         self.setupUI()
 
     @log_decorator
     def closeEvent( self, *args, **kwargs ):
+        """
+        Stops all plugins before closing the window.
+        """
         self.host_services.stop_plugins()
                 
     @log_decorator
     def setupUI(self):
-
+        """
+        Sets up the main user interface layout for the application.
+        """
         self.te = TextConsole()
 
         self.qtbridge.signalLog.connect( self.te.append )
@@ -317,8 +461,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.setCentralWidget(qtcontainer)
 
-
-
 if __name__ == '__main__':
 
     ENV_LOG_LVL = 'LOG_LEVEL'
@@ -351,6 +493,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     try:
+        """
+        Sets up logging configuration based on the specified log level.
+        """
         log_lvl = log_lvl_map[ app_log_lvl ]
         logging.basicConfig( level=log_lvl )
     except Exception as e:
