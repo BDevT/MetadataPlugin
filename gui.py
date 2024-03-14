@@ -32,8 +32,28 @@ import ingestorservices.core as core
 
 import ingestorservices.widgets.bindings.pyside2 as bindings
 
-logger = logging.getLogger( __name__ )
-log_decorator = core.create_logger_decorator( logger )
+logger = logging.getLogger(__name__)
+"""
+A logging object for the current module.
+
+This variable is obtained using `logging.getLogger(__name__)`, where
+`__name__` is a special built-in variable that holds the name of the current
+module. This ensures that log messages generated within this module will be
+identified by their module name, promoting clarity and organization in your
+application's logs.
+"""
+
+log_decorator = core.create_logger_decorator(logger)
+"""
+A decorator function for logging function calls.
+
+This decorator, created using `core.create_logger_decorator(logger)`, is
+designed to be applied to function definitions. When a function decorated
+with `log_decorator` is called, it will automatically log the function's entry
+and exit points, along with any arguments passed and the return value. This
+can be helpful for debugging and tracking execution flow.
+"""
+
 
 #import jsonschema
 #https://github.com/leixingyu/jsonEditor/blob/master/main.py
@@ -41,8 +61,7 @@ import linecache
 
 def PrintException():
     """
-    Prints and logs an exception with its traceback information.
-
+    Prints and logs an exception with its traceback information. 
     Used for informative error handling during program execution.
     """
     exc_type, exc_obj, tb = sys.exc_info()
@@ -54,13 +73,19 @@ def PrintException():
     print( 'EXCEPTION IN ({}, LINE {} "{}"): {}'.format(filename, lineno, line.strip(), exc_obj))
     traceback.print_exc() 
 
-
 ERR_NONE = 0
+"""
+Constant representing no error (value: 0).
+
+This constant is typically used in error handling mechanisms to indicate
+successful operation or the absence of any errors. Assigning a function or
+operation's return value to `ERR_NONE` and checking if it's equal to
+`ERR_NONE` allows for concise error checking.
+"""
 
 class LoginWidget( QtWidgets.QWidget ):
     """
-    Login widget class for user authentication.
-
+    Login widget class for user authentication. 
     Provides UI elements for entering username and password, and emits signals for login and logout actions.
     """
     def __init__(self, f_login, f_logout):
@@ -81,8 +106,7 @@ class LoginWidget( QtWidgets.QWidget ):
     @log_decorator
     def setupUI(self):
         """
-        Sets up the user interface for the login widget.
-
+        Sets up the user interface for the login widget. 
         Creates and arranges UI elements like labels, input fields, and buttons.
         """
         self.user_edit = QtWidgets.QLineEdit()
@@ -153,8 +177,7 @@ class LoginWidget( QtWidgets.QWidget ):
     def slotOnBtnLogin(self, *args):
         """
         Attempts to log in the user using the provided callback function.
-
-        If successful, enables the logout button and disables the login button. Disables both input fields.
+        If successful, enables the logout button and disables the login button. Disables both input fields. 
         Otherwise, the behavior is not specified in the current code.
 
         Args:
@@ -206,8 +229,7 @@ class LoginWidget( QtWidgets.QWidget ):
     @log_decorator
     def slotOnBtnLogout(self, *args):
         """
-        Attempts to log out the user using the provided callback function.
-
+        Attempts to log out the user using the provided callback function. 
         If successful, enables the login button and disables the logout button. Enables both input fields.
         Otherwise, the behavior is not specified in the current code.
 
@@ -222,12 +244,9 @@ class LoginWidget( QtWidgets.QWidget ):
         self.user_edit.setEnabled( True )
         self.pw_edit.setEnabled( True )
 
-
-
 def getProxyModel( node ):
     """
-    Creates and returns a proxy model for a given model.
-
+    Creates and returns a proxy model for a given model. 
     The created proxy model acts as an intermediary layer for filtering and sorting data from the original model.
 
     Args:
@@ -251,8 +270,7 @@ def getProxyModel( node ):
 
 def myprint( *args, **kwargs ):
     """
-    Prints the provided arguments with formatting options.
-
+    Prints the provided arguments with formatting options. 
     This function takes any number of positional and keyword arguments, and prints
     them using the `print` function along with specified keyword arguments.
 
@@ -269,23 +287,19 @@ def myprint( *args, **kwargs ):
 
 class TextConsole( QtWidgets.QPlainTextEdit ):
     """
-    **TextConsole class**
-
-    This class provides a widget that displays text in a console-like format. It inherits from the `QPlainTextEdit` class of PySide2 and offers read-only functionality with a limited number of displayed lines.
+    This class provides a widget that displays text in a console-like format. 
+    It inherits from the `QPlainTextEdit` class of PySide2 and offers read-only functionality with a limited number of displayed lines.
 
     **Attributes:**
-
     * `max_lines` (int): The maximum number of lines to display in the text console.
 
     **Methods:**
-
     * `__init__(self)`: Initializes the `TextConsole` object.
     * `append(self, s)`: Appends a string `s` to the text console.
     """
     def __init__(self):
         """
-        Initializes the `TextConsole` object.
-
+        Initializes the `TextConsole` object. 
         Sets the text console to read-only and establishes a maximum number of lines for display.
         """
         super().__init__()
@@ -296,8 +310,7 @@ class TextConsole( QtWidgets.QPlainTextEdit ):
 
     def append( self, s ):
         """
-        Appends a string `s` to the text console.
-
+        Appends a string `s` to the text console. 
         This method adds the provided string to the end of the displayed text, maintaining the maximum line limit.
         """
         self.appendPlainText( s )
@@ -313,8 +326,7 @@ class MainWindow(QtWidgets.QMainWindow):
     """
     class QtBridge( QtCore.QObject ):
         """
-        Internal class to bridge signals between the HostServices bridge
-        and the main window for logging purposes.
+        Internal class to bridge signals between the HostServices bridge and the main window for logging purposes.
 
         Emits a `signalLog` signal whenever a log message is received.
         """

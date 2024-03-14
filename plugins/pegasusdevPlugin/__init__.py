@@ -26,15 +26,34 @@ import logging
 
 from plugins.pegasusdevPlugin.extract import extractPegasus
 
-logger = logging.getLogger( __name__ )
-
 import ingestorservices as services
 import ingestorservices.widgets as widgets
 import ingestorservices.core as core
 import ingestorservices.metadata as metadata
 import ingestorservices.plugin
 
-log_decorator = core.create_logger_decorator( logger )
+logger = logging.getLogger(__name__)
+"""
+A logging object for the current module.
+
+This variable is obtained using `logging.getLogger(__name__)`, where
+`__name__` is a special built-in variable that holds the name of the current
+module. This ensures that log messages generated within this module will be
+identified by their module name, promoting clarity and organization in your
+application's logs.
+"""
+
+log_decorator = core.create_logger_decorator(logger)
+"""
+A decorator function for logging function calls.
+
+This decorator, created using `core.create_logger_decorator(logger)`, is
+designed to be applied to function definitions. When a function decorated
+with `log_decorator` is called, it will automatically log the function's entry
+and exit points, along with any arguments passed and the return value. This
+can be helpful for debugging and tracking execution flow.
+"""
+
 
 import threading
 import queue
@@ -57,6 +76,9 @@ class WorkerBase( threading.Thread):
         Initializes the base worker thread.
         """
         super().__init__()
+        """
+        A threading.Condition object used to signal worker thread termination.
+        """
         self.cond_stop = threading.Condition()
 
     def stop(self):
@@ -82,9 +104,14 @@ class RetryWorker( WorkerBase ):
         """ 
         super().__init__()
 
+        """
+        The path to the directory being monitored for new Markdown files.
+        """
         self.root = path
+        """
+        The queue where discovered Markdown file paths are placed for further processing.
+        """
         self.q_out = q_out
-
 
     def run(self):
         """
@@ -132,7 +159,18 @@ class MyHandler( watchdog.events.FileSystemEventHandler ):
             **kwargs: Keyword arguments passed to the parent class (FileSystemEventHandler) constructor.
         """
         super().__init__( *args, **kwargs )
+
+        """
+        Stores the path of the last file that was created and triggered a signal emission.
+
+        This variable is used to track the most recently created file and prevent emitting signals for the same file repeatedly.
+        """
         self.last_created = None
+        """
+        Stores the last time a signal was emitted for a file creation event.
+
+        This variable is used to enforce a minimum time gap between emitting signals for subsequent file creations.
+        """
         self.last_time = datetime.datetime.min
 
     def on_any_event(self, evt):
@@ -163,9 +201,6 @@ class Producer( WorkerBase ):
     
     Producer class for file system monitoring and trigger event generation.
     """
-    '''Producer class sets up file system monitoring using RetryWorker and MyHandler, creating workers, observing file system events,'''
-    '''and managing threads to generate trigger events based on detected changes.'''
-    ''' Generate trigger events using the RetryWorker and the MyHandler '''
 
     def __init__(self, q, path_spool = './data'):
         """
@@ -177,9 +212,21 @@ class Producer( WorkerBase ):
         """
         super().__init__()
 
+        """
+        A core.Signal object used to notify consumers when new Hive files are available.
+        """
         self.signal = core.Signal()
+        """
+        An integer variable used for internal accounting or tracking purposes (specific usage depends on implementation).
+        """
         self.count = 0
+        """
+        A queue.Queue object that holds the paths to new Hive files received from the RetryWorker.
+        """
         self.q = q
+        """
+        path_spool: A pathlib.Path object representing the root directory for storing Hive data.
+        """
         self.path_spool = pathlib.Path( path_spool )
 
     def run(self):
@@ -243,9 +290,19 @@ class Consumer( WorkerBase ):
         """
         super().__init__()
         self.q_in = q_in
-        self.count = 0
+        """
+        A queue object used for receiving Markdown file paths from the producer.
+        """ 
 
+        self.count = 0
+        """
+        An integer variable used for tracking the number of iterations in the Consumer's run loop.
+        """
+        
         self.sigDataAvailable = core.Signal()
+        """
+        A core.Signal object used to emit a signal when data is retrieved from the queue.
+        """
 
     def run(self):
         """
@@ -283,10 +340,19 @@ class PegasusPlugin( ingestorservices.plugin.PluginBase ):
                 to framework functionalities.
         """
         super().__init__(host_services)
+      
+        """Path to the spool directory where Markdown files are placed."""
         self.path_spool  = pathlib.Path('./data/pegasus')
+        
+        """Queue used for communication between producer and consumer threads."""
         self.q = queue.Queue()
+
+        """Producer thread that reads Markdown files and puts them into the queue."""
         self.producer = Producer(self.q)
-        self.consumer = Consumer( self.q )
+
+        """Consumer thread that takes Markdown files from the queue and processes them."""
+        self.consumer = Consumer(self.q)
+
         self.consumer.sigDataAvailable.connect( self.onDataAvailable )
 
         for t in [self.consumer, self.producer]:
@@ -343,7 +409,9 @@ class PegasusPlugin( ingestorservices.plugin.PluginBase ):
         prop_software = requireProperty( 'Software', '' )
         prop_experimentData = boxProperty( 'Simulation data', '' )
 
+        """The plugin's main widget used for user interaction."""
         w = widgets.Widget.create()
+
         self.w = w
 
         vbox = widgets.VBoxLayout()
@@ -362,7 +430,9 @@ class PegasusPlugin( ingestorservices.plugin.PluginBase ):
         mainMetadataLayout =  services._property_group_4_layout( pg )
         vbox.addLayout(mainMetadataLayout)
 
-        # Add submit button
+        """
+        A PushButton widget used for submitting data.
+        """
         self.btn = widgets.PushButton.create('Submit')
         self.btn.clicked.connect(self.onSubmitRequest)
         vbox.addWidget(self.btn)
