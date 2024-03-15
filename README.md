@@ -2,6 +2,10 @@
 
 This repository contains the Metadata HIVE/PEGASUS examples
 
+## Documentation
+
+Documentation can be found here: https://farscape-digital.github.io/
+
 ## Installation
 
 1. Clone this repository to your local machine.
