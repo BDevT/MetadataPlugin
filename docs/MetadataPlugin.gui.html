@@ -392,7 +392,7 @@ Functions:
     
     <td>Class</td>
     <td><code><a href="MetadataPlugin.gui.LoginWidget.html" class="internal-link" title="MetadataPlugin.gui.LoginWidget"><wbr></wbr>Login<wbr></wbr>Widget</a></code></td>
-    <td>Login widget class for user authentication.</td>
+    <td>Login widget class for user authentication.  Provides UI elements for entering username and password, and emits signals for login and logout actions.</td>
   </tr><tr class="class">
     
     <td>Class</td>
@@ -402,37 +402,37 @@ Functions:
     
     <td>Class</td>
     <td><code><a href="MetadataPlugin.gui.TextConsole.html" class="internal-link" title="MetadataPlugin.gui.TextConsole"><wbr></wbr>Text<wbr></wbr>Console</a></code></td>
-    <td>**TextConsole class**</td>
+    <td>This class provides a widget that displays text in a console-like format.  It inherits from the `QPlainTextEdit` class of PySide2 and offers read-only functionality with a limited number of displayed lines.</td>
   </tr><tr class="function">
     
     <td>Function</td>
     <td><code><a href="#getProxyModel" class="internal-link" title="MetadataPlugin.gui.getProxyModel">get<wbr></wbr>Proxy<wbr></wbr>Model</a></code></td>
-    <td>Creates and returns a proxy model for a given model.</td>
+    <td>Creates and returns a proxy model for a given model.  The created proxy model acts as an intermediary layer for filtering and sorting data from the original model.</td>
   </tr><tr class="function">
     
     <td>Function</td>
     <td><code><a href="#myprint" class="internal-link" title="MetadataPlugin.gui.myprint">myprint</a></code></td>
-    <td>Prints the provided arguments with formatting options.</td>
+    <td>Prints the provided arguments with formatting options.  This function takes any number of positional and keyword arguments, and prints them using the `print` function along with specified keyword arguments.</td>
   </tr><tr class="function">
     
     <td>Function</td>
     <td><code><a href="#PrintException" class="internal-link" title="MetadataPlugin.gui.PrintException"><wbr></wbr>Print<wbr></wbr>Exception</a></code></td>
-    <td>Prints and logs an exception with its traceback information.</td>
+    <td>Prints and logs an exception with its traceback information.  Used for informative error handling during program execution.</td>
   </tr><tr class="constant">
     
     <td>Constant</td>
     <td><code><a href="#ERR_NONE" class="internal-link" title="MetadataPlugin.gui.ERR_NONE">ERR<wbr></wbr>_NONE</a></code></td>
-    <td><span class="undocumented">Undocumented</span></td>
+    <td>Constant representing no error (value: 0).</td>
   </tr><tr class="variable">
     
     <td>Variable</td>
     <td><code><a href="#log_decorator" class="internal-link" title="MetadataPlugin.gui.log_decorator">log<wbr></wbr>_decorator</a></code></td>
-    <td><span class="undocumented">Undocumented</span></td>
+    <td>A decorator function for logging function calls.</td>
   </tr><tr class="variable">
     
     <td>Variable</td>
     <td><code><a href="#logger" class="internal-link" title="MetadataPlugin.gui.logger">logger</a></code></td>
-    <td><span class="undocumented">Undocumented</span></td>
+    <td>A logging object for the current module.</td>
   </tr>
 </table>
           
@@ -463,8 +463,7 @@ Functions:
   </div>
   <div class="docstring functionBody">
     
-    <div><p class="pre">Creates and returns a proxy model for a given model.
-
+    <div><p class="pre">Creates and returns a proxy model for a given model. 
 The created proxy model acts as an intermediary layer for filtering and sorting data from the original model.
 
 Args:
@@ -495,8 +494,7 @@ Returns:
   </div>
   <div class="docstring functionBody">
     
-    <div><p class="pre">Prints the provided arguments with formatting options.
-
+    <div><p class="pre">Prints the provided arguments with formatting options. 
 This function takes any number of positional and keyword arguments, and prints
 them using the `print` function along with specified keyword arguments.
 
@@ -530,8 +528,7 @@ Returns:
   </div>
   <div class="docstring functionBody">
     
-    <div><p class="pre">Prints and logs an exception with its traceback information.
-
+    <div><p class="pre">Prints and logs an exception with its traceback information. 
 Used for informative error handling during program execution.</p></div>
   </div>
 </div><div class="baseconstant">
@@ -555,7 +552,12 @@ Used for informative error handling during program execution.</p></div>
   </div>
   <div class="functionBody">
     
-    <div><p class="undocumented">Undocumented</p></div>
+    <div><p class="pre">Constant representing no error (value: 0).
+
+This constant is typically used in error handling mechanisms to indicate
+successful operation or the absence of any errors. Assigning a function or
+operation's return value to `ERR_NONE` and checking if it's equal to
+`ERR_NONE` allows for concise error checking.</p></div>
     <table class="valueTable"><tr class="fieldStart"><td class="fieldName">Value</td></tr><tr><td><pre class="constant-value"><code>0</code></pre></td></tr></table>
   </div>
 </div><div class="basevariable">
@@ -579,7 +581,13 @@ Used for informative error handling during program execution.</p></div>
   </div>
   <div class="functionBody">
     
-    <div><p class="undocumented">Undocumented</p></div>
+    <div><p class="pre">A decorator function for logging function calls.
+
+This decorator, created using `core.create_logger_decorator(logger)`, is
+designed to be applied to function definitions. When a function decorated
+with `log_decorator` is called, it will automatically log the function's entry
+and exit points, along with any arguments passed and the return value. This
+can be helpful for debugging and tracking execution flow.</p></div>
     
   </div>
 </div><div class="basevariable">
@@ -603,7 +611,13 @@ Used for informative error handling during program execution.</p></div>
   </div>
   <div class="functionBody">
     
-    <div><p class="undocumented">Undocumented</p></div>
+    <div><p class="pre">A logging object for the current module.
+
+This variable is obtained using `logging.getLogger(__name__)`, where
+`__name__` is a special built-in variable that holds the name of the current
+module. This ensures that log messages generated within this module will be
+identified by their module name, promoting clarity and organization in your
+application's logs.</p></div>
     
   </div>
 </div>
@@ -618,7 +632,7 @@ Used for informative error handling during program execution.</p></div>
   <div class="container">
     <a href="index.html">API Documentation</a> for <a href="https://github.com/BDevT/MetadataPlugin/" class="projecthome">MetadataPlugin</a>,
   generated by <a href="https://github.com/twisted/pydoctor/">pydoctor</a>
-    23.9.1 at 2024-03-13 13:50:32.
+    23.9.1 at 2024-03-15 15:58:29.
   </div>
 
   <!-- Search related scripts needs to be loaded at the end of HTML 

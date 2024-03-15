@@ -331,7 +331,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">A logging object for the current module.</div>
           </li><li id="MetadataPlugin.gui.log_decorator">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.gui<wbr></wbr>.log<wbr></wbr>_decorator</div>
@@ -339,7 +339,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">A decorator function for logging function calls.</div>
           </li><li id="MetadataPlugin.gui.PrintException">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.gui<wbr></wbr>.<wbr></wbr>Print<wbr></wbr>Exception</div>
@@ -347,7 +347,7 @@
             <div class="type">Function</div>
             <div class="kind">Function</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary">Prints and logs an exception with its traceback information.</div>
+            <div class="summary">Prints and logs an exception with its traceback information.  Used for informative error handling during program execution.</div>
           </li><li id="MetadataPlugin.gui.ERR_NONE">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.gui<wbr></wbr>.ERR<wbr></wbr>_NONE</div>
@@ -355,7 +355,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Constant</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">Constant representing no error (value: 0).</div>
           </li><li id="MetadataPlugin.gui.LoginWidget">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.gui<wbr></wbr>.<wbr></wbr>Login<wbr></wbr>Widget</div>
@@ -363,7 +363,7 @@
             <div class="type">Class</div>
             <div class="kind">Class</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary">Login widget class for user authentication.</div>
+            <div class="summary">Login widget class for user authentication.  Provides UI elements for entering username and password, and emits signals for login and logout actions.</div>
           </li><li id="MetadataPlugin.gui.LoginWidget.__init__">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.gui<wbr></wbr>.<wbr></wbr>Login<wbr></wbr>Widget<wbr></wbr>.__init__</div>
@@ -395,7 +395,7 @@
             <div class="type">Function</div>
             <div class="kind">Method</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary">Sets up the user interface for the login widget.</div>
+            <div class="summary">Sets up the user interface for the login widget.  Creates and arranges UI elements like labels, input fields, and buttons.</div>
           </li><li id="MetadataPlugin.gui.LoginWidget.user_edit">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.gui<wbr></wbr>.<wbr></wbr>Login<wbr></wbr>Widget<wbr></wbr>.user<wbr></wbr>_edit</div>
@@ -451,7 +451,7 @@
             <div class="type">Function</div>
             <div class="kind">Method</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary">Attempts to log in the user using the provided callback function.</div>
+            <div class="summary">Attempts to log in the user using the provided callback function. If successful, enables the logout button and disables the login button. Disables both input fields.  Otherwise, the behavior is not specified in the current code.</div>
           </li><li id="MetadataPlugin.gui.LoginWidget.slotOnBtnLogout">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.gui<wbr></wbr>.<wbr></wbr>Login<wbr></wbr>Widget<wbr></wbr>.slot<wbr></wbr>On<wbr></wbr>Btn<wbr></wbr>Logout</div>
@@ -459,7 +459,7 @@
             <div class="type">Function</div>
             <div class="kind">Method</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary">Attempts to log out the user using the provided callback function.</div>
+            <div class="summary">Attempts to log out the user using the provided callback function.  If successful, enables the login button and disables the logout button. Enables both input fields. Otherwise, the behavior is not specified in the current code.</div>
           </li><li id="MetadataPlugin.gui.getProxyModel">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.gui<wbr></wbr>.get<wbr></wbr>Proxy<wbr></wbr>Model</div>
@@ -467,7 +467,7 @@
             <div class="type">Function</div>
             <div class="kind">Function</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary">Creates and returns a proxy model for a given model.</div>
+            <div class="summary">Creates and returns a proxy model for a given model.  The created proxy model acts as an intermediary layer for filtering and sorting data from the original model.</div>
           </li><li id="MetadataPlugin.gui.myprint">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.gui<wbr></wbr>.myprint</div>
@@ -475,7 +475,7 @@
             <div class="type">Function</div>
             <div class="kind">Function</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary">Prints the provided arguments with formatting options.</div>
+            <div class="summary">Prints the provided arguments with formatting options.  This function takes any number of positional and keyword arguments, and prints them using the `print` function along with specified keyword arguments.</div>
           </li><li id="MetadataPlugin.gui.TextConsole">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.gui<wbr></wbr>.<wbr></wbr>Text<wbr></wbr>Console</div>
@@ -483,7 +483,7 @@
             <div class="type">Class</div>
             <div class="kind">Class</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary">**TextConsole class**</div>
+            <div class="summary">This class provides a widget that displays text in a console-like format.  It inherits from the `QPlainTextEdit` class of PySide2 and offers read-only functionality with a limited number of displayed lines.</div>
           </li><li id="MetadataPlugin.gui.TextConsole.__init__">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.gui<wbr></wbr>.<wbr></wbr>Text<wbr></wbr>Console<wbr></wbr>.__init__</div>
@@ -491,7 +491,7 @@
             <div class="type">Function</div>
             <div class="kind">Method</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary">Initializes the `TextConsole` object.</div>
+            <div class="summary">Initializes the `TextConsole` object.  Sets the text console to read-only and establishes a maximum number of lines for display.</div>
           </li><li id="MetadataPlugin.gui.TextConsole.max_lines">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.gui<wbr></wbr>.<wbr></wbr>Text<wbr></wbr>Console<wbr></wbr>.max<wbr></wbr>_lines</div>
@@ -507,7 +507,7 @@
             <div class="type">Function</div>
             <div class="kind">Method</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary">Appends a string `s` to the text console.</div>
+            <div class="summary">Appends a string `s` to the text console.  This method adds the provided string to the end of the displayed text, maintaining the maximum line limit.</div>
           </li><li id="MetadataPlugin.gui.MainWindow">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.gui<wbr></wbr>.<wbr></wbr>Main<wbr></wbr>Window</div>
@@ -2635,7 +2635,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">A logging object for the current module.</div>
           </li><li id="MetadataPlugin.plugins.hivedevPlugin.log_decorator">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.hivedev<wbr></wbr>Plugin<wbr></wbr>.log<wbr></wbr>_decorator</div>
@@ -2643,7 +2643,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">A decorator function for logging function calls.</div>
           </li><li id="MetadataPlugin.plugins.hivedevPlugin.WorkerBase">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.hivedev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Worker<wbr></wbr>Base</div>
@@ -2699,7 +2699,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">The queue where discovered Markdown file paths are placed for further processing.</div>
           </li><li id="MetadataPlugin.plugins.hivedevPlugin.RetryWorker.q_out">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.hivedev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Retry<wbr></wbr>Worker<wbr></wbr>.q<wbr></wbr>_out</div>
@@ -2739,7 +2739,7 @@
             <div class="type">Function</div>
             <div class="kind">Method</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary">Constructor for MyHandler class. Args:     *args: Arguments to be passed to the base class constructor (FileSystemEventHandler).     **kwargs: Keyword arguments to be passed to the base class constructor (FileSystemEventHandler).</div>
+            <div class="summary">Constructor for MyHandler class.</div>
           </li><li id="MetadataPlugin.plugins.hivedevPlugin.MyHandler.last_created">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.hivedev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>My<wbr></wbr>Handler<wbr></wbr>.last<wbr></wbr>_created</div>
@@ -2747,7 +2747,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">Stores the last time a signal was emitted for a file creation event.</div>
           </li><li id="MetadataPlugin.plugins.hivedevPlugin.MyHandler.last_time">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.hivedev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>My<wbr></wbr>Handler<wbr></wbr>.last<wbr></wbr>_time</div>
@@ -2787,7 +2787,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">An integer variable used for internal accounting or tracking purposes (specific usage depends on implementation).</div>
           </li><li id="MetadataPlugin.plugins.hivedevPlugin.Producer.count">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.hivedev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Producer<wbr></wbr>.count</div>
@@ -2795,7 +2795,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">A queue.Queue object that holds the paths to new Hive files received from the RetryWorker.</div>
           </li><li id="MetadataPlugin.plugins.hivedevPlugin.Producer.q">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.hivedev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Producer<wbr></wbr>.q</div>
@@ -2803,7 +2803,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">path_spool: A pathlib.Path object representing the root directory for storing Hive data.</div>
           </li><li id="MetadataPlugin.plugins.hivedevPlugin.Producer.path_spool">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.hivedev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Producer<wbr></wbr>.path<wbr></wbr>_spool</div>
@@ -2851,7 +2851,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">A queue object used for receiving Markdown file paths from the producer.</div>
           </li><li id="MetadataPlugin.plugins.hivedevPlugin.Consumer.count">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.hivedev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Consumer<wbr></wbr>.count</div>
@@ -2859,7 +2859,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">An integer variable used for tracking the number of iterations in the Consumer's run loop.</div>
           </li><li id="MetadataPlugin.plugins.hivedevPlugin.Consumer.sigDataAvailable">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.hivedev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Consumer<wbr></wbr>.sig<wbr></wbr>Data<wbr></wbr>Available</div>
@@ -2867,7 +2867,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">A core.Signal object used to emit a signal when data is retrieved from the queue.</div>
           </li><li id="MetadataPlugin.plugins.hivedevPlugin.Consumer.run">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.hivedev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Consumer<wbr></wbr>.run</div>
@@ -2899,7 +2899,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">Queue used for communication between producer and consumer threads.</div>
           </li><li id="MetadataPlugin.plugins.hivedevPlugin.HivePlugin.q">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.hivedev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Hive<wbr></wbr>Plugin<wbr></wbr>.q</div>
@@ -2907,7 +2907,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">Producer thread that reads Markdown files and puts them into the queue.</div>
           </li><li id="MetadataPlugin.plugins.hivedevPlugin.HivePlugin.producer">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.hivedev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Hive<wbr></wbr>Plugin<wbr></wbr>.producer</div>
@@ -2915,7 +2915,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">Consumer thread that takes Markdown files from the queue and processes them.</div>
           </li><li id="MetadataPlugin.plugins.hivedevPlugin.HivePlugin.consumer">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.hivedev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Hive<wbr></wbr>Plugin<wbr></wbr>.consumer</div>
@@ -2923,7 +2923,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">The plugin's main widget used for user interaction.</div>
           </li><li id="MetadataPlugin.plugins.hivedevPlugin.HivePlugin.w">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.hivedev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Hive<wbr></wbr>Plugin<wbr></wbr>.w</div>
@@ -2931,7 +2931,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">A PushButton widget used for submitting data.</div>
           </li><li id="MetadataPlugin.plugins.hivedevPlugin.HivePlugin.btn">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.hivedev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Hive<wbr></wbr>Plugin<wbr></wbr>.btn</div>
@@ -3019,7 +3019,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">A logging object for the current module.</div>
           </li><li id="MetadataPlugin.plugins.pegasusdevPlugin.log_decorator">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.pegasusdev<wbr></wbr>Plugin<wbr></wbr>.log<wbr></wbr>_decorator</div>
@@ -3027,7 +3027,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">A decorator function for logging function calls.</div>
           </li><li id="MetadataPlugin.plugins.pegasusdevPlugin.WorkerBase">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.pegasusdev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Worker<wbr></wbr>Base</div>
@@ -3083,7 +3083,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">The queue where discovered Markdown file paths are placed for further processing.</div>
           </li><li id="MetadataPlugin.plugins.pegasusdevPlugin.RetryWorker.q_out">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.pegasusdev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Retry<wbr></wbr>Worker<wbr></wbr>.q<wbr></wbr>_out</div>
@@ -3131,7 +3131,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">Stores the last time a signal was emitted for a file creation event.</div>
           </li><li id="MetadataPlugin.plugins.pegasusdevPlugin.MyHandler.last_time">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.pegasusdev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>My<wbr></wbr>Handler<wbr></wbr>.last<wbr></wbr>_time</div>
@@ -3171,7 +3171,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">An integer variable used for internal accounting or tracking purposes (specific usage depends on implementation).</div>
           </li><li id="MetadataPlugin.plugins.pegasusdevPlugin.Producer.count">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.pegasusdev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Producer<wbr></wbr>.count</div>
@@ -3179,7 +3179,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">A queue.Queue object that holds the paths to new Hive files received from the RetryWorker.</div>
           </li><li id="MetadataPlugin.plugins.pegasusdevPlugin.Producer.q">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.pegasusdev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Producer<wbr></wbr>.q</div>
@@ -3187,7 +3187,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">path_spool: A pathlib.Path object representing the root directory for storing Hive data.</div>
           </li><li id="MetadataPlugin.plugins.pegasusdevPlugin.Producer.path_spool">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.pegasusdev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Producer<wbr></wbr>.path<wbr></wbr>_spool</div>
@@ -3235,7 +3235,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">A queue object used for receiving Markdown file paths from the producer.</div>
           </li><li id="MetadataPlugin.plugins.pegasusdevPlugin.Consumer.count">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.pegasusdev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Consumer<wbr></wbr>.count</div>
@@ -3243,7 +3243,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">An integer variable used for tracking the number of iterations in the Consumer's run loop.</div>
           </li><li id="MetadataPlugin.plugins.pegasusdevPlugin.Consumer.sigDataAvailable">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.pegasusdev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Consumer<wbr></wbr>.sig<wbr></wbr>Data<wbr></wbr>Available</div>
@@ -3251,7 +3251,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">A core.Signal object used to emit a signal when data is retrieved from the queue.</div>
           </li><li id="MetadataPlugin.plugins.pegasusdevPlugin.Consumer.run">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.pegasusdev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Consumer<wbr></wbr>.run</div>
@@ -3283,7 +3283,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">Queue used for communication between producer and consumer threads.</div>
           </li><li id="MetadataPlugin.plugins.pegasusdevPlugin.PegasusPlugin.q">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.pegasusdev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Pegasus<wbr></wbr>Plugin<wbr></wbr>.q</div>
@@ -3291,7 +3291,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">Producer thread that reads Markdown files and puts them into the queue.</div>
           </li><li id="MetadataPlugin.plugins.pegasusdevPlugin.PegasusPlugin.producer">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.pegasusdev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Pegasus<wbr></wbr>Plugin<wbr></wbr>.producer</div>
@@ -3299,7 +3299,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">Consumer thread that takes Markdown files from the queue and processes them.</div>
           </li><li id="MetadataPlugin.plugins.pegasusdevPlugin.PegasusPlugin.consumer">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.pegasusdev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Pegasus<wbr></wbr>Plugin<wbr></wbr>.consumer</div>
@@ -3307,7 +3307,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">The plugin's main widget used for user interaction.</div>
           </li><li id="MetadataPlugin.plugins.pegasusdevPlugin.PegasusPlugin.w">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.pegasusdev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Pegasus<wbr></wbr>Plugin<wbr></wbr>.w</div>
@@ -3315,7 +3315,7 @@
             <div class="type">Attribute</div>
             <div class="kind">Instance Variable</div>
             <div class="privacy">PUBLIC</div>
-            <div class="summary"><span class="undocumented">Undocumented</span></div>
+            <div class="summary">A PushButton widget used for submitting data.</div>
           </li><li id="MetadataPlugin.plugins.pegasusdevPlugin.PegasusPlugin.btn">
             
             <div class="fullName"><wbr></wbr>Metadata<wbr></wbr>Plugin<wbr></wbr>.plugins<wbr></wbr>.pegasusdev<wbr></wbr>Plugin<wbr></wbr>.<wbr></wbr>Pegasus<wbr></wbr>Plugin<wbr></wbr>.btn</div>
